@@ -103,7 +103,9 @@ void main(int argc, char* argv[])
         return;
     }
 	
-	while(yylex() != 0 && next_token());
+	while(yylex() != 0) {
+		next_token()
+	}
 	fclose(yyin); fclose(yyout);
 	
 	printf("\nINFO: Output for test file 1 has been generated successfully.");
