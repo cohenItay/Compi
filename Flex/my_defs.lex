@@ -1,12 +1,15 @@
+%option noyywrap
+
 %{
+	#pragma warning(disable : 4996)
 	#include "Token.h"
 	#define TEMAMTES_INFO "205651078_304950702"
 	#define COPYRIGHTS "Created by Tom Naidich and Itay Cohen"
 	int line_num = 1;
 %}
 
-/*Comment-Handling Declarations*/
-%x 										commentTypeMultiLine commentTypeSingleLine
+
+%x 										commentTypeMultiLine commentTypeSingleLine // declare on comment related states
 DIGIT 									[0-9]
 ALPHA									[a-zA-Z]
 
@@ -40,8 +43,7 @@ ALPHA									[a-zA-Z]
 "*"										{ return handle_token(TOKEN_AR_MUL); }
 "="										{ return handle_token(TOKEN_AR_EQUAL); }
 
-"."										{ return handle_to
-ken(TOKEN_COMMA); }
+"."										{ return handle_token(TOKEN_COMMA); }
 ":"										{ return handle_token(TOKEN_COLON); }
 ";"										{ return handle_token(TOKEN_SEMICOLON); }
 
