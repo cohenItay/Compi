@@ -8,10 +8,12 @@
 	int line_num = 1;
 %}
 
-
-%x 										commentTypeMultiLine commentTypeSingleLine // declare on comment related states
+/* declare on comment related states */
+%x 										commentTypeMultiLine commentTypeSingleLine
 DIGIT 									[0-9]
 ALPHA									[a-zA-Z]
+ALPHA_UPPER								[A-Z]
+ALPHA_LOWER								[a-z]
 
 %%
 
@@ -54,15 +56,15 @@ ALPHA									[a-zA-Z]
 "{"										{ return handle_token(TOKEN_CURLY_BRACE_OPEN); }
 "}"										{ return handle_token(TOKEN_CURLY_BRACE_CLOSE); }
 
-{ALPHA}+({ALPHA}|{DIGIT})*								{ return handle_token(TOKEN_ID); } /* Handle variable & method names */
-(0|[1-9]{DIGIT}*).{DIGIT}+[eE](\+|\-)?(0|[1-9]{DIGIT}*)	{ return handle_token(TOKEN_FLOAT); } /* Handle Float values */
-0|[1-9]{DIGIT}*     									{ return handle_token(TOKEN_INTEGER); } /* Handle Integer values */
+{ALPHA_LOWER}+(_?({ALPHA}|{DIGIT}))*									{ return handle_token(TOKEN_ID); }			 /* Id group */
+(0|[1-9]{DIGIT}*).{DIGIT}+[eE](\+|\-)?(0|[1-9]{DIGIT}*)					{ return handle_token(TOKEN_FLOAT); }		 /* Handle Float values */
+0|[1-9]{DIGIT}*															{ return handle_token(TOKEN_INTEGER); }		/* Handle Integer values */
 
 
 <<EOF>> 								{ return handle_token(TOKEN_EOF); } /* Handle END OF FILE */
 
 \n   									{ line_num++; }
-.										/* Do nothing */
+.										{return handle_error("No token found");}
 %%
 
 int handle_token(eTOKENS token_kind) 
@@ -77,11 +79,9 @@ int handle_token(eTOKENS token_kind)
 
 int handle_error(char* message) 
 {
-	fprintf(yyout, "Error in line %d: %s.\n", line_num, message);
-	return 0;
+	fprintf(yyout, "Error in line %d: for input: %s.\n reason: %s\n", line_num, yytext, message);
+	return 1;
 }
-
-int yywrap() { return 1; }
 
 void main(int argc, char* argv[])
 {
@@ -104,9 +104,10 @@ void main(int argc, char* argv[])
     }
 	
 	while(yylex() != 0) {
-		next_token()
+		next_token();
 	}
-	fclose(yyin); fclose(yyout);
+	fclose(yyin);
+	fclose(yyout);
 	
 	printf("\nINFO: Output for test file 1 has been generated successfully.");
 	// END OF Lex
@@ -125,8 +126,11 @@ void main(int argc, char* argv[])
     }
 	
 	yyrestart(yyin);
-	while(yylex() != 0 && next_token());
-	fclose(yyin); fclose(yyout);
+	while(yylex() != 0) {
+		next_token();
+	}
+	fclose(yyin);
+	fclose(yyout);
 	
 	printf("\nINFO: Output for test file 2 has been generated successfully.");
 	// END OF Lex
