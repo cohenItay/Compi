@@ -64,6 +64,7 @@ ALPHA_LOWER								[a-z]
 <<EOF>> 								{ return handle_token(TOKEN_EOF); } /* Handle END OF FILE */
 
 " "										/* Do nothing */
+"\t"									/* Do nothing */
 \n   									{ line_num++; }
 .										{return handle_error("No token found");}
 %%
@@ -105,7 +106,7 @@ void main(int argc, char* argv[])
     }
 	
 	while(yylex() != 0) {
-		//next_token(); // NO NEED TO CALL - YYLEX FUNCTION IS RESPOSIBLE TO PROCEED WITH TOKEN.
+		next_token();
 	}
 	fclose(yyin);
 	fclose(yyout);
@@ -127,8 +128,8 @@ void main(int argc, char* argv[])
     }
 	
 	yyrestart(yyin);
-	while(yylex() != 0){
-		//next_token(); // NO NEED TO CALL - YYLEX FUNCTION IS RESPOSIBLE TO PROCEED WITH TOKEN.
+	while(yylex() != 0) {
+		next_token();
 	}
 	fclose(yyin);
 	fclose(yyout);

@@ -91,7 +91,7 @@ void create_and_store_token(eTOKENS kind, char* lexeme, int numOfLine)
 /*
 * This function returns the token in the storage that is stored immediately before the current token (if exsits).
 */
-Token *back_token() { return NULL; }
+Token* back_token() { return NULL; }
 
 /*
 * If the next token already exists in the storage (this happens when back_token was called before this call to next_token): 
@@ -99,9 +99,14 @@ Token *back_token() { return NULL; }
 * Else: continues to read the input file in order to identify, create and store a new token (using yylex function);
 *  returns the token that was created.
 */
-Token *next_token() 
+Token* next_token() 
 { 
-	return &currentNode->tokensArray[currentIndex]; 
+	Token* tokArr = currentNode->tokensArray;
+	size_t n = sizeof(tokArr) / sizeof(Token);
+	if (currentIndex < n)
+		return &currentNode->tokensArray[currentIndex];
+	else
+		return NULL;
 }
 
 char* get_token_name(eTOKENS kind)
