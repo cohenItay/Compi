@@ -21,7 +21,7 @@ ALPHA_LOWER								[a-z]
 <commentTypeMultiLine>"*/"  			{ BEGIN(0); }
 <commentTypeMultiLine>.            		/* Do nothing until comment region is closed */
 <commentTypeMultiLine>\n             	{ line_num++; }
-<commentTypeMultiLine><<EOF>>           { return handle_error("Reached EOF unexpectedly."); }
+<commentTypeMultiLine><<EOF>>           { return handle_unexpected_eof(); }
 
 "//"   									{ BEGIN(commentTypeSingleLine); } /* Handle Single Line Comments */
 <commentTypeSingleLine>.             	/* Do nothing untill a new line is reached */
@@ -66,7 +66,7 @@ ALPHA_LOWER								[a-z]
 " "										/* Do nothing */
 "\t"									/* Do nothing */
 \n   									{ line_num++; }
-.										{return handle_error("No token found");}
+.										{ return handle_invalid_token(); }
 %%
 
 int handle_token(eTOKENS token_kind) 
@@ -79,10 +79,16 @@ int handle_token(eTOKENS token_kind)
 	return token_kind != TOKEN_EOF ? 1 : 0;
 }
 
-int handle_error(char* message) 
+int handle_invalid_token() 
 {
-	fprintf(yyout, "Error in line %d: for input: %s\n reason: %s\n", line_num, yytext, message);
+	fprintf(yyout, "- ERROR: The character '%s' at line: %d does not begin any legal token in the language.\n", yytext, line_num);
 	return 1;
+}
+
+int handle_unexpected_eof()
+{
+	fprintf(yyout, "- ERROR: Reached EOF unexpectedly at line: %d.", line_num);
+	return 0;
 }
 
 void main(int argc, char* argv[])
@@ -99,11 +105,11 @@ void main(int argc, char* argv[])
 	yyout = fopen(path_output1_lex, "w");
 	
 	if (yyin == NULL || yyout == NULL)
-    {
+    	{
 		const char* invalid_path = yyin == NULL ? path_input1 : path_output1_lex;
 		printf("\nERROR: Failed to open file at path %s. Aborting...", invalid_path);
         return;
-    }
+    	}
 	
 	while(yylex() != 0) {
 		next_token();
@@ -121,11 +127,11 @@ void main(int argc, char* argv[])
 	yyout = fopen(path_output2_lex, "w");
 	
 	if (yyin == NULL || yyout == NULL)
-    {
+    	{
 		const char* invalid_path = yyin == NULL ? path_input2 : path_output2_lex;
         printf("\nERROR: Failed to open file at path %s. Aborting...", invalid_path);
         return;
-    }
+    	}
 	
 	yyrestart(yyin);
 	while(yylex() != 0) {
