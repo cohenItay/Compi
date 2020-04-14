@@ -45,7 +45,7 @@ ALPHA_LOWER								[a-z]
 "*"										{ return handle_token(TOKEN_AR_MUL); }
 "="										{ return handle_token(TOKEN_AR_EQUAL); }
 
-"."										{ return handle_token(TOKEN_COMMA); }
+","										{ return handle_token(TOKEN_COMMA); }
 ":"										{ return handle_token(TOKEN_COLON); }
 ";"										{ return handle_token(TOKEN_SEMICOLON); }
 

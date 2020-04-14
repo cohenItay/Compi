@@ -101,12 +101,13 @@ Token* back_token() { return NULL; }
 */
 Token* next_token() 
 { 
-	Token* tokArr = currentNode->tokensArray;
-	size_t n = sizeof(tokArr) / sizeof(Token);
-	if (currentIndex < n)
-		return &currentNode->tokensArray[currentIndex];
-	else
-		return NULL;
+	if (currentNode != NULL) {
+		Token* tokArr = currentNode->tokensArray;
+		size_t n = sizeof(tokArr) / sizeof(Token);
+		if (currentIndex < n)
+			return &(currentNode->tokensArray[currentIndex]);
+	}
+	return NULL;
 }
 
 char* get_token_name(eTOKENS kind)
