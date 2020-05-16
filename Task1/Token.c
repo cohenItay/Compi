@@ -173,6 +173,14 @@ Token* next_token()
 	return tempToken;
 }
 
+int match(eTOKENS t) {
+	Token* tok = next_token();
+	if (tok != NULL) {
+		return tok->kind == t;
+	}
+	return 0;
+}
+
 char* get_token_name(eTOKENS kind)
 {
 	return eTokenTitles[kind];
