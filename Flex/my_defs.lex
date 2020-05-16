@@ -3,6 +3,8 @@
 %{
 	#pragma warning(disable : 4996)
 	#include "Token.h"
+	#include "parser.h"
+	#define SHOULD_PRINT_LEXICAL 0
 	#define TEMAMTES_INFO "205651078_304950702"
 	#define COPYRIGHTS "Created by Tom Naidich and Itay Cohen"
 	int line_num = 1;
@@ -74,20 +76,23 @@ int handle_token(eTOKENS token_kind)
 	create_and_store_token(token_kind, yytext, line_num);
 	
 	char* token_name = get_token_name(token_kind);
-	fprintf(yyout, "Token of type '%s', lexeme: '%s', found in line: %d.\n", token_name, yytext, line_num);
+	if (SHOULD_PRINT_LEXICAL)
+		fprintf(yyout, "Token of type '%s', lexeme: '%s', found in line: %d.\n", token_name, yytext, line_num);
 
 	return token_kind != TOKEN_EOF ? 1 : 0;
 }
 
 int handle_invalid_token() 
 {
-	fprintf(yyout, "- ERROR: The character '%s' at line: %d does not begin any legal token in the language.\n", yytext, line_num);
+	if (SHOULD_PRINT_LEXICAL)
+		fprintf(yyout, "- ERROR: The character '%s' at line: %d does not begin any legal token in the language.\n", yytext, line_num);
 	return 1;
 }
 
 int handle_unexpected_eof()
 {
-	fprintf(yyout, "- ERROR: Reached EOF unexpectedly at line: %d.", line_num);
+	if (SHOULD_PRINT_LEXICAL)
+		fprintf(yyout, "- ERROR: Reached EOF unexpectedly at line: %d.", line_num);
 	return 0;
 }
 
@@ -110,9 +115,7 @@ void main(int argc, char* argv[])
         return;
     }
 	
-	while(yylex() != 0) {
-		
-	}
+	run_parser();
 	fclose(yyin);
 	fclose(yyout);
 	
@@ -122,25 +125,32 @@ void main(int argc, char* argv[])
 	
 
 
+
+
+
+
 	// HANDLE TestCase 2
 	// HANDLE LEX
+	/*
 	yyin = fopen(path_input2, "r");
 	yyout = fopen(path_output2_lex, "w");
 	
-	if (yyin == NULL || yyout == NULL){
+	if (yyin == NULL || yyout == NULL)
+    	{
 		const char* invalid_path = yyin == NULL ? path_input2 : path_output2_lex;
         printf("\nERROR: Failed to open file at path %s. Aborting...", invalid_path);
         return;
-    }
+    	}
 	
 	yyrestart(yyin);
 	while(yylex() != 0) {
-		
+		next_token();
 	}
 	fclose(yyin);
 	fclose(yyout);
 	
 	printf("\nINFO: Output for test file 2 has been generated successfully.");
+	*/
 	// END OF Lex
 	// END OF TestCase 2
 }

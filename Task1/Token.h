@@ -9,6 +9,8 @@ extern FILE *yyin, *yyout;
 
 typedef enum eTOKENS
 {
+	//Undefined token
+	TOKEN_NULL,
 	// Return Types
 	TOKEN_VOID_TYPE, TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE,
 	// Variable Types
@@ -32,6 +34,8 @@ typedef enum eTOKENS
 }eTOKENS;
 
 static const char* eTokenTitles[] = {
+	//Undefined token
+	"NULL",
 	// Return Types
 	"VoidType", "IntType", "FloatType",
 	// Variable Types
@@ -72,7 +76,7 @@ void create_and_store_token(eTOKENS kind, char* lexeme, int numOfLine);
 Token *next_token();
 Token* current_token();
 Token *back_token();
-int match(Token t);
+int match(int count, eTOKENS t, ...);
 
 char* get_token_name(eTOKENS kind);
 #endif

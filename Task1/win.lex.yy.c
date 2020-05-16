@@ -508,13 +508,15 @@ char *yytext;
 #line 4 "my_defs.lex"
 	#pragma warning(disable : 4996)
 	#include "Token.h"
+	#include "parser.h"
+	#define SHOULD_PRINT_LEXICAL 0
 	#define TEMAMTES_INFO "205651078_304950702"
 	#define COPYRIGHTS "Created by Tom Naidich and Itay Cohen"
 	int line_num = 1;
-#line 514 "win.lex.yy.c"
+#line 516 "win.lex.yy.c"
 /* declare on comment related states */
 
-#line 517 "win.lex.yy.c"
+#line 519 "win.lex.yy.c"
 
 #define INITIAL 0
 #define commentTypeMultiLine 1
@@ -730,10 +732,10 @@ YY_DECL
 		}
 
 	{
-#line 18 "my_defs.lex"
+#line 20 "my_defs.lex"
 
 
-#line 736 "win.lex.yy.c"
+#line 738 "win.lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -792,207 +794,207 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 20 "my_defs.lex"
+#line 22 "my_defs.lex"
 { BEGIN(commentTypeMultiLine); } /* Handle Multi Line Comments */
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 21 "my_defs.lex"
+#line 23 "my_defs.lex"
 { BEGIN(0); }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 22 "my_defs.lex"
+#line 24 "my_defs.lex"
 /* Do nothing until comment region is closed */
 	YY_BREAK
 case 4:
 /* rule 4 can match eol */
 YY_RULE_SETUP
-#line 23 "my_defs.lex"
+#line 25 "my_defs.lex"
 { line_num++; }
 	YY_BREAK
 case YY_STATE_EOF(commentTypeMultiLine):
-#line 24 "my_defs.lex"
+#line 26 "my_defs.lex"
 { return handle_unexpected_eof(); }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 26 "my_defs.lex"
+#line 28 "my_defs.lex"
 { BEGIN(commentTypeSingleLine); } /* Handle Single Line Comments */
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 27 "my_defs.lex"
+#line 29 "my_defs.lex"
 /* Do nothing untill a new line is reached */
 	YY_BREAK
 case 7:
 /* rule 7 can match eol */
 YY_RULE_SETUP
-#line 28 "my_defs.lex"
+#line 30 "my_defs.lex"
 { line_num++; BEGIN(0); }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 30 "my_defs.lex"
+#line 32 "my_defs.lex"
 { return handle_token(TOKEN_VOID_TYPE); }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 31 "my_defs.lex"
+#line 33 "my_defs.lex"
 { return handle_token(TOKEN_INTEGER_TYPE); }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 32 "my_defs.lex"
+#line 34 "my_defs.lex"
 { return handle_token(TOKEN_FLOAT_TYPE); }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 34 "my_defs.lex"
+#line 36 "my_defs.lex"
 { return handle_token(TOKEN_IF); }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 35 "my_defs.lex"
+#line 37 "my_defs.lex"
 { return handle_token(TOKEN_RETURN); }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 37 "my_defs.lex"
+#line 39 "my_defs.lex"
 { return handle_token(TOKEN_COMP_E); }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 38 "my_defs.lex"
+#line 40 "my_defs.lex"
 { return handle_token(TOKEN_COMP_NE); }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 39 "my_defs.lex"
+#line 41 "my_defs.lex"
 { return handle_token(TOKEN_COMP_GT); }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 40 "my_defs.lex"
+#line 42 "my_defs.lex"
 { return handle_token(TOKEN_COMP_GTE); }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 41 "my_defs.lex"
+#line 43 "my_defs.lex"
 { return handle_token(TOKEN_COMP_LT); }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 42 "my_defs.lex"
+#line 44 "my_defs.lex"
 { return handle_token(TOKEN_COMP_LTE); }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 44 "my_defs.lex"
+#line 46 "my_defs.lex"
 { return handle_token(TOKEN_AR_ADD); }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 45 "my_defs.lex"
+#line 47 "my_defs.lex"
 { return handle_token(TOKEN_AR_MUL); }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 46 "my_defs.lex"
+#line 48 "my_defs.lex"
 { return handle_token(TOKEN_AR_EQUAL); }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 48 "my_defs.lex"
+#line 50 "my_defs.lex"
 { return handle_token(TOKEN_COMMA); }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 49 "my_defs.lex"
+#line 51 "my_defs.lex"
 { return handle_token(TOKEN_COLON); }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 50 "my_defs.lex"
+#line 52 "my_defs.lex"
 { return handle_token(TOKEN_SEMICOLON); }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 52 "my_defs.lex"
+#line 54 "my_defs.lex"
 { return handle_token(TOKEN_PARENTHESE_OPEN); }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 53 "my_defs.lex"
+#line 55 "my_defs.lex"
 { return handle_token(TOKEN_PARENTHESE_CLOSE); }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 54 "my_defs.lex"
+#line 56 "my_defs.lex"
 { return handle_token(TOKEN_BRACKET_OPEN); }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 55 "my_defs.lex"
+#line 57 "my_defs.lex"
 { return handle_token(TOKEN_BRACKET_CLOSE); }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 56 "my_defs.lex"
+#line 58 "my_defs.lex"
 { return handle_token(TOKEN_CURLY_BRACE_OPEN); }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 57 "my_defs.lex"
+#line 59 "my_defs.lex"
 { return handle_token(TOKEN_CURLY_BRACE_CLOSE); }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 59 "my_defs.lex"
+#line 61 "my_defs.lex"
 { return handle_token(TOKEN_ID); }			 /* Id group */
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 60 "my_defs.lex"
+#line 62 "my_defs.lex"
 { return handle_token(TOKEN_FLOAT); }		 /* Handle Float values */
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 61 "my_defs.lex"
+#line 63 "my_defs.lex"
 { return handle_token(TOKEN_INTEGER); }		/* Handle Integer values */
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(commentTypeSingleLine):
-#line 64 "my_defs.lex"
+#line 66 "my_defs.lex"
 { return handle_token(TOKEN_EOF); } /* Handle END OF FILE */
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 66 "my_defs.lex"
+#line 68 "my_defs.lex"
 /* Do nothing */
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 67 "my_defs.lex"
+#line 69 "my_defs.lex"
 /* Do nothing */
 	YY_BREAK
 case 36:
 /* rule 36 can match eol */
 YY_RULE_SETUP
-#line 68 "my_defs.lex"
+#line 70 "my_defs.lex"
 { line_num++; }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 69 "my_defs.lex"
+#line 71 "my_defs.lex"
 { return handle_invalid_token(); }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 70 "my_defs.lex"
+#line 72 "my_defs.lex"
 ECHO;
 	YY_BREAK
-#line 995 "win.lex.yy.c"
+#line 997 "win.lex.yy.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -1995,7 +1997,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 70 "my_defs.lex"
+#line 72 "my_defs.lex"
 
 
 int handle_token(eTOKENS token_kind) 
@@ -2003,20 +2005,23 @@ int handle_token(eTOKENS token_kind)
 	create_and_store_token(token_kind, yytext, line_num);
 	
 	char* token_name = get_token_name(token_kind);
-	fprintf(yyout, "Token of type '%s', lexeme: '%s', found in line: %d.\n", token_name, yytext, line_num);
+	if (SHOULD_PRINT_LEXICAL)
+		fprintf(yyout, "Token of type '%s', lexeme: '%s', found in line: %d.\n", token_name, yytext, line_num);
 
 	return token_kind != TOKEN_EOF ? 1 : 0;
 }
 
 int handle_invalid_token() 
 {
-	fprintf(yyout, "- ERROR: The character '%s' at line: %d does not begin any legal token in the language.\n", yytext, line_num);
+	if (SHOULD_PRINT_LEXICAL)
+		fprintf(yyout, "- ERROR: The character '%s' at line: %d does not begin any legal token in the language.\n", yytext, line_num);
 	return 1;
 }
 
 int handle_unexpected_eof()
 {
-	fprintf(yyout, "- ERROR: Reached EOF unexpectedly at line: %d.", line_num);
+	if (SHOULD_PRINT_LEXICAL)
+		fprintf(yyout, "- ERROR: Reached EOF unexpectedly at line: %d.", line_num);
 	return 0;
 }
 
@@ -2039,11 +2044,7 @@ void main(int argc, char* argv[])
         return;
     }
 	
-	while(yylex() != 0) {
-		Token* tok = next_token();
-		char* lexeme = tok != NULL ? tok->lexeme : "null";
-		printf("next token is %s\n", lexeme);
-	}
+	run_parser();
 	fclose(yyin);
 	fclose(yyout);
 	
@@ -2053,8 +2054,13 @@ void main(int argc, char* argv[])
 	
 
 
+
+
+
+
 	// HANDLE TestCase 2
 	// HANDLE LEX
+	/*
 	yyin = fopen(path_input2, "r");
 	yyout = fopen(path_output2_lex, "w");
 	
@@ -2073,6 +2079,7 @@ void main(int argc, char* argv[])
 	fclose(yyout);
 	
 	printf("\nINFO: Output for test file 2 has been generated successfully.");
+	*/
 	// END OF Lex
 	// END OF TestCase 2
 }

@@ -1,4 +1,5 @@
 #include "Token.h"
+#include <stdarg.h>
 
 /* This package describes the storage of tokens identified in the input text.
 * The storage is a bi-directional list of nodes.
@@ -10,7 +11,7 @@ There are three functions providing an external access to the storage:
 - functions next_token and back_token; they are called by parser during the syntax analysis (the second stage of compilation)
 */
 
-int currentIndex = 0;
+int currentIndex = -1;
 Node* currentNode = NULL;
 
 #define TOKEN_ARRAY_SIZE 1000
@@ -41,6 +42,7 @@ void create_and_store_token(eTOKENS kind, char* lexeme, int numOfLine)
 		}
 		currentNode->prev = NULL;
 		currentNode->next = NULL;
+		currentIndex = 0;
 	}
 
 	// case 2: at least one token exsits in the storage.
@@ -93,17 +95,16 @@ void create_and_store_token(eTOKENS kind, char* lexeme, int numOfLine)
 * While updating currentIndex and currentNode appropriatley.
 */
 Token* back_token() {
-	Node* requiredNode = currentNode;
 	int requiredIndex = currentIndex-1;
 	if (requiredIndex == -1) {
-		requiredNode = currentNode->prev;
-		if (requiredNode == NULL) {
+		if (currentNode->prev == NULL) {
 			// this is the start of the file and no previous token exists.
 			return NULL;
 		}
 		requiredIndex = TOKEN_ARRAY_SIZE - 1;
 	}
-	return &(requiredNode->tokensArray[requiredIndex]); 
+	currentIndex = requiredIndex;
+	return &(currentNode->tokensArray[requiredIndex]); 
 }
 
 Token* current_token() {
@@ -118,39 +119,38 @@ Token* current_token() {
 */
 Token* next_token() 
 {
+	Token* tempToken;
+	int requiredIndex = currentIndex + 1;
 	while (currentNode == NULL) {
 		if (yylex() == 0) {
-			// yylex() has finished his work. no Node / Token was created
+			tempToken = &(currentNode->tokensArray[currentIndex]);
+			// yylex() has finished his work. should return TOKEN_EOF
 			// could happen if all of the input aren't in the language
-			return NULL;
+			return tempToken;
 		}
 	}
 	// currentNode must exists.
 
-	Node* requiredNode = currentNode;
-	int requiredIndex = currentIndex + 1;
-	Token* tempToken;
 	if (requiredIndex < TOKEN_ARRAY_SIZE) {
-		tempToken = &(requiredNode->tokensArray[requiredIndex]);
-		if (tempToken->lexeme == 0) {
+		tempToken = &(currentNode->tokensArray[requiredIndex]);
+		if (tempToken->kind == TOKEN_NULL) {
 			// tokensArray is allocated using calloc which causes initialization of all of his Token structs to reset. (0 value insertion)
 			// lexeme is empty.
 			while (currentIndex != requiredIndex) {
 				// run yylex until it finds the next legit token.
 				if (yylex() == 0) {
-					// yylex() finished with the file, no next token exists.
-					return NULL;
+					// yylex() finished with the file, no next token exists. should return TOKEN_EOF
+					return tempToken;
 				}
 			}
 		}
 		// at this poiont, requiredIndex == currentIndex
 	} else if (requiredIndex == TOKEN_ARRAY_SIZE) {
-		requiredNode = currentNode->next;
-		while (requiredNode != NULL) {
-			// run yylex until it finds the next node is created for the next legit token.
+		while (currentIndex != 0) {
+			// run yylex until it finds the next node and resets the index for the next legit token.
 			if (yylex() == 0) {
-				// yylex() finished with the file, no next token exists.
-				return NULL;
+				// yylex() finished with the file, no next token exists.should return EOF
+				return &(currentNode->tokensArray[currentIndex]);
 			}
 		}
 		requiredIndex = currentIndex;
@@ -158,8 +158,8 @@ Token* next_token()
 			printf("WTF  index should have gotten threw reset\n");
 			return NULL;
 		}
-		// at this point requiredNode value shouldn't be NULL.
-		tempToken = &(requiredNode->tokensArray[requiredIndex]);
+		// at this point currentNode value shouldn't be NULL.
+		tempToken = &(currentNode->tokensArray[requiredIndex]);
 	}
 	else {
 		printf("Something went wrong with the indexes offset..\n");
@@ -173,11 +173,62 @@ Token* next_token()
 	return tempToken;
 }
 
-int match(eTOKENS t) {
+static char* concat(const char* s1, const char* s2)
+{
+	const size_t len1 = strlen(s1);
+	const size_t len2 = strlen(s2);
+	char* result = malloc(len1 + len2 + 1); // +1 for the null-terminator
+	memcpy(result, s1, len1);
+	memcpy(result + len1, s2, len2 + 1); // +1 to copy the null-terminator
+	return result;
+}
+
+/*
+* match to one of the eTOKENS sent.
+*/
+int match(int count, eTOKENS t, ...) {
 	Token* tok = next_token();
+	int isMatch;
+	va_list tkns_ap;
+	int i;
+	char* requiredTokensNames;
+	int freeStr = 0;
+
 	if (tok != NULL) {
-		return tok->kind == t;
+		va_start(tkns_ap, count); // initialize the argument list
+		t = va_arg(tkns_ap, eTOKENS);
+		isMatch = tok->kind == t;
+		requiredTokensNames = get_token_name(t);
+		if (!isMatch && count > 1) {
+			// search if other token matches.
+			for (i = 1; i < count; i++) {
+				t = va_arg(tkns_ap, eTOKENS);
+				isMatch = tok->kind == t;
+				if (isMatch) {
+					break;
+				}
+				else {
+					freeStr = 1;
+					requiredTokensNames = concat(requiredTokensNames, " | ");
+					requiredTokensNames = concat(requiredTokensNames, get_token_name(t));
+				}
+			}
+		}
+		if (!isMatch) {
+			fprintf(
+				yyout, 
+				"Expected token of type '%s' at line: %d, Actual token of type '%s', lexeme: '%s'.",
+				requiredTokensNames,
+				tok->lineNumber,
+				get_token_name(tok->kind),
+				tok->lexeme
+			);
+		}
+		if (freeStr)
+			free(requiredTokensNames);
+		return isMatch;
 	}
+	printf("match func: next_token() returned NULL, WTF\n");
 	return 0;
 }
 
