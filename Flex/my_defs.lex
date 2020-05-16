@@ -104,15 +104,16 @@ void main(int argc, char* argv[])
 	yyin = fopen(path_input1, "r");
 	yyout = fopen(path_output1_lex, "w");
 	
-	if (yyin == NULL || yyout == NULL)
-    	{
+	if (yyin == NULL || yyout == NULL) {
 		const char* invalid_path = yyin == NULL ? path_input1 : path_output1_lex;
 		printf("\nERROR: Failed to open file at path %s. Aborting...", invalid_path);
         return;
-    	}
+    }
 	
 	while(yylex() != 0) {
-		next_token();
+		Token* tok = next_token();
+		char* lexeme = tok != NULL ? tok->lexeme : "null";
+		printf("next token is %s\n", lexeme);
 	}
 	fclose(yyin);
 	fclose(yyout);
@@ -121,6 +122,8 @@ void main(int argc, char* argv[])
 	// END OF Lex
 	// END OF TestCase 1
 	
+
+
 	// HANDLE TestCase 2
 	// HANDLE LEX
 	yyin = fopen(path_input2, "r");

@@ -70,6 +70,7 @@ typedef struct Node
 
 void create_and_store_token(eTOKENS kind, char* lexeme, int numOfLine);
 Token *next_token();
+Token* current_token();
 Token *back_token();
 
 char* get_token_name(eTOKENS kind);
