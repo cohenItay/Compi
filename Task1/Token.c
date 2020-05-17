@@ -184,9 +184,17 @@ static char* concat(const char* s1, const char* s2)
 }
 
 /*
-* match to one of the eTOKENS sent.
+* matches the token.
 */
-int match(int count, eTOKENS t, ...) {
+int match(eTOKENS t) {
+	return match(1, t);
+}
+
+/*
+* calls next_token() once internally and
+* match to at least one of the eTOKENS sent.
+*/
+int match_multi(int count, eTOKENS t, ...) {
 	Token* tok = next_token();
 	int isMatch;
 	va_list tkns_ap;
@@ -217,7 +225,7 @@ int match(int count, eTOKENS t, ...) {
 		if (!isMatch) {
 			fprintf(
 				yyout, 
-				"Expected token of type '%s' at line: %d, Actual token of type '%s', lexeme: '%s'.",
+				"Expected token of type '%s' at line: %d, Actual token of type '%s', lexeme: '%s'\n",
 				requiredTokensNames,
 				tok->lineNumber,
 				get_token_name(tok->kind),

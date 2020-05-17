@@ -115,7 +115,7 @@ void main(int argc, char* argv[])
         return;
     }
 	
-	run_parser();
+	parse();
 	fclose(yyin);
 	fclose(yyout);
 	
@@ -131,7 +131,7 @@ void main(int argc, char* argv[])
 
 	// HANDLE TestCase 2
 	// HANDLE LEX
-	/*
+	/* ---------------------------------------------------
 	yyin = fopen(path_input2, "r");
 	yyout = fopen(path_output2_lex, "w");
 	
@@ -150,7 +150,7 @@ void main(int argc, char* argv[])
 	fclose(yyout);
 	
 	printf("\nINFO: Output for test file 2 has been generated successfully.");
-	*/
+	----------------------------------------------------- */
 	// END OF Lex
 	// END OF TestCase 2
 }

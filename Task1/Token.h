@@ -76,7 +76,8 @@ void create_and_store_token(eTOKENS kind, char* lexeme, int numOfLine);
 Token *next_token();
 Token* current_token();
 Token *back_token();
-int match(int count, eTOKENS t, ...);
+int match(eTOKENS t);
+int match_multi(int count, eTOKENS t, ...);
 
 char* get_token_name(eTOKENS kind);
 #endif
