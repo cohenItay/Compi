@@ -52,7 +52,7 @@ void create_and_store_token(eTOKENS kind, char* lexeme, int numOfLine)
 		if (currentIndex == TOKEN_ARRAY_SIZE - 1)
 		{
 			currentIndex = 0;
-			currentNode->next = (Node*)malloc(sizeof(Node));
+			currentNode->next = (Node*)calloc(sizeof(Node), 1);
 
 			if(currentNode == NULL)
 			{
@@ -97,14 +97,16 @@ void create_and_store_token(eTOKENS kind, char* lexeme, int numOfLine)
 Token* back_token() {
 	int requiredIndex = currentIndex-1;
 	if (requiredIndex == -1) {
+		requiredIndex = TOKEN_ARRAY_SIZE - 1;
 		if (currentNode->prev == NULL) {
 			// this is the start of the file and no previous token exists.
+			currentIndex = -1;
 			return NULL;
 		}
-		requiredIndex = TOKEN_ARRAY_SIZE - 1;
 	}
 	currentIndex = requiredIndex;
-	return &(currentNode->tokensArray[requiredIndex]); 
+	return &(currentNode->tokensArray[requiredIndex]);
+	
 }
 
 Token* current_token() {
@@ -119,7 +121,8 @@ Token* current_token() {
 */
 Token* next_token() 
 {
-	Token* tempToken;
+	Token* tempToken = NULL;
+	Node* tempNode;
 	int requiredIndex = currentIndex + 1;
 	while (currentNode == NULL) {
 		if (yylex() == 0) {
@@ -144,24 +147,36 @@ Token* next_token()
 				}
 			}
 		}
+		else {
+			currentIndex = requiredIndex; // no new token has created, just point back to this token
+		}
 		// at this poiont, requiredIndex == currentIndex
 	} else if (requiredIndex == TOKEN_ARRAY_SIZE) {
-		while (currentIndex != 0) {
-			// run yylex until it finds the next node and resets the index for the next legit token.
-			if (yylex() == 0) {
-				// yylex() finished with the file, no next token exists.should return EOF
-				return &(currentNode->tokensArray[currentIndex]);
+		tempNode = currentNode->next;
+		if (tempNode != NULL) {
+			requiredIndex = 0;
+			tempToken = &(tempNode->tokensArray[requiredIndex]);
+		} 
+		if (tempToken == NULL || tempToken->kind == TOKEN_NULL) {
+			while (currentIndex != 0) {
+				// run yylex until it finds the next node and resets the index for the next legit token.
+				if (yylex() == 0) {
+					// yylex() finished with the file, no next token exists.should return EOF
+					return &(currentNode->tokensArray[currentIndex]);
+				}
 			}
+			requiredIndex = currentIndex;
+			if (requiredIndex != 0) {
+				printf("WTF  index should have gotten threw reset\n");
+				return NULL;
+			}
+			// at this point currentNode value shouldn't be NULL.
+			tempToken = &(currentNode->tokensArray[requiredIndex]);
+		} else {
+			// no yylex operation, i need to update the index.
+			currentIndex = requiredIndex;
 		}
-		requiredIndex = currentIndex;
-		if (requiredIndex != 0) {
-			printf("WTF  index should have gotten threw reset\n");
-			return NULL;
-		}
-		// at this point currentNode value shouldn't be NULL.
-		tempToken = &(currentNode->tokensArray[requiredIndex]);
-	}
-	else {
+	} else {
 		printf("Something went wrong with the indexes offset..\n");
 		return NULL;
 	}
@@ -187,7 +202,7 @@ static char* concat(const char* s1, const char* s2)
 * matches the token.
 */
 int match(eTOKENS t) {
-	return match(1, t);
+	return match_multi(1, t);
 }
 
 /*
@@ -217,7 +232,7 @@ int match_multi(int count, eTOKENS t, ...) {
 				}
 				else {
 					freeStr = 1;
-					requiredTokensNames = concat(requiredTokensNames, " | ");
+					requiredTokensNames = concat(requiredTokensNames, " OR ");
 					requiredTokensNames = concat(requiredTokensNames, get_token_name(t));
 				}
 			}
