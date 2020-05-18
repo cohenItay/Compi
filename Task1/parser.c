@@ -124,9 +124,10 @@ static void parse_VAR_DEC_TAG() {
 			break;
 		}
 		case TOKEN_BRACKET_OPEN: {
-			fprintf(yyout, "Rule VAR_DEC_TAG -> [ DIM_SIZES ]\n");
+			fprintf(yyout, "Rule VAR_DEC_TAG -> [ DIM_SIZES ];\n");
 			parse_DIM_SIZES();
 			match(TOKEN_BRACKET_CLOSE);
+			match(TOKEN_SEMICOLON);
 			break;
 		}
 		default: {
