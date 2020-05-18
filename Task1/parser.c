@@ -24,6 +24,32 @@ static void parse_PARAM_LIST();
 static void parse_PARAM_LIST_TAG();
 static void parse_FUNC_PREDEFS_TAG();
 
+static void parse_COMP_STMT();
+static void parse_VAR_DEC_LIST();
+static void parse_VAR_DEC_LIST_TAG();
+static void parse_STMT_LIST();
+static void parse_STMT_LIST_TAG();
+static void parse_STMT();
+static void parse_STMT_TAG();
+static void parse_IF_STMT();
+static void parse_CALL();
+static void parse_ARGS();
+static void parse_ARG_LIST();
+static void parse_ARG_LIST_TAG();
+static void parse_RETURN_STMT();
+static void parse_RETURN_STMT_TAG();
+static void parse_VAR();
+static void parse_VAR_TAG();
+static void parse_EXPR_LIST();
+static void parse_EXPR_LIST_TAG();
+static void parse_CONDITION();
+static void parse_EXPR();
+static void parse_EXPR_TAG();
+static void parse_TERM();
+static void parse_TERM_TAG();
+static void parse_FACTOR();
+static void parse_FACTOR_TAG();
+
 
 Token* nextToken;
 
@@ -36,38 +62,38 @@ static void parse_PROG() {
 	nextToken = next_token();
 	back_token();
 	switch (nextToken->kind) {
-		case TOKEN_INTEGER_TYPE:
-		case TOKEN_FLOAT_TYPE: {
-			fprintf(yyout, "Rule PROG -> GLOBAL_VARS  FUNC_PREDEFS  FUNC_FULL_DEFS\n");
-			parse_GLOBAL_VARS();
-			parse_FUNC_PREDEFS();
-			parse_FUNC_FULL_DEFS();
-			break;
-		}
-		default: {
-			match_multi(2, TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE); // for printing the error.
-			error_recovery(TOKEN_EOF);
-		}
+	case TOKEN_INTEGER_TYPE:
+	case TOKEN_FLOAT_TYPE: {
+		fprintf(yyout, "Rule PROG -> GLOBAL_VARS  FUNC_PREDEFS  FUNC_FULL_DEFS\n");
+		parse_GLOBAL_VARS();
+		parse_FUNC_PREDEFS();
+		parse_FUNC_FULL_DEFS();
+		break;
+	}
+	default: {
+		match_multi(2, TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE); // for printing the error.
+		error_recovery(TOKEN_EOF);
+	}
 	}
 }
- 
+
 static void parse_GLOBAL_VARS() {
 	eTOKENS* self_follow;
 	nextToken = next_token();
 	back_token();
 	switch (nextToken->kind) {
-		case TOKEN_INTEGER_TYPE:
-		case TOKEN_FLOAT_TYPE: {
-			fprintf(yyout, "Rule GLOBAL_VARS -> VAR_DEC GLOBAL_VARS_TAG\n");
-			parse_VAR_DEC();
-			parse_GLOBAL_VARS_TAG();
-			break;
-		}
-		default: {
-			match_multi(2, TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE);
-			self_follow = (eTOKENS[3]){ TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE, TOKEN_VOID_TYPE };
-			error_recovery_multi(3, self_follow);
-		}
+	case TOKEN_INTEGER_TYPE:
+	case TOKEN_FLOAT_TYPE: {
+		fprintf(yyout, "Rule GLOBAL_VARS -> VAR_DEC GLOBAL_VARS_TAG\n");
+		parse_VAR_DEC();
+		parse_GLOBAL_VARS_TAG();
+		break;
+	}
+	default: {
+		match_multi(2, TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE);
+		self_follow = (eTOKENS[3]){ TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE, TOKEN_VOID_TYPE };
+		error_recovery_multi(3, self_follow);
+	}
 	}
 }
 
@@ -76,19 +102,19 @@ static void parse_VAR_DEC() {
 	nextToken = next_token();
 	back_token();
 	switch (nextToken->kind) {
-		case TOKEN_INTEGER_TYPE:
-		case TOKEN_FLOAT_TYPE: {
-			fprintf(yyout, "Rule VAR_DEC -> TYPE id VAR_DEC_TAG\n");
-			parse_TYPE();
-			match(TOKEN_ID);
-			parse_VAR_DEC_TAG();
-			break;
-		}
-		default: {
-			match_multi(2, TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE);
-			self_follow = (eTOKENS[7]){ TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE, TOKEN_VOID_TYPE, TOKEN_ID, TOKEN_CURLY_BRACE_OPEN, TOKEN_IF, TOKEN_RETURN };
-			error_recovery_multi(7, self_follow);
-		}
+	case TOKEN_INTEGER_TYPE:
+	case TOKEN_FLOAT_TYPE: {
+		fprintf(yyout, "Rule VAR_DEC -> TYPE id VAR_DEC_TAG\n");
+		parse_TYPE();
+		match(TOKEN_ID);
+		parse_VAR_DEC_TAG();
+		break;
+	}
+	default: {
+		match_multi(2, TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE);
+		self_follow = (eTOKENS[7]){ TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE, TOKEN_VOID_TYPE, TOKEN_ID, TOKEN_CURLY_BRACE_OPEN, TOKEN_IF, TOKEN_RETURN };
+		error_recovery_multi(7, self_follow);
+	}
 	}
 }
 
@@ -96,20 +122,20 @@ static void parse_TYPE() {
 	nextToken = next_token();
 	back_token();
 	switch (nextToken->kind) {
-		case TOKEN_INTEGER_TYPE: {
-			fprintf(yyout, "Rule TYPE -> int\n");
-			match(TOKEN_INTEGER_TYPE);
-			break;
-		}
-		case TOKEN_FLOAT_TYPE: {
-			fprintf(yyout, "Rule TYPE -> float\n");
-			match(TOKEN_FLOAT_TYPE);
-			break;
-		}
-		default: {
-			match_multi(2, TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE);
-			error_recovery(TOKEN_ID);
-		}
+	case TOKEN_INTEGER_TYPE: {
+		fprintf(yyout, "Rule TYPE -> int\n");
+		match(TOKEN_INTEGER_TYPE);
+		break;
+	}
+	case TOKEN_FLOAT_TYPE: {
+		fprintf(yyout, "Rule TYPE -> float\n");
+		match(TOKEN_FLOAT_TYPE);
+		break;
+	}
+	default: {
+		match_multi(2, TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE);
+		error_recovery(TOKEN_ID);
+	}
 	}
 }
 
@@ -118,22 +144,22 @@ static void parse_VAR_DEC_TAG() {
 	nextToken = next_token();
 	back_token();
 	switch (nextToken->kind) {
-		case TOKEN_SEMICOLON: {
-			fprintf(yyout, "Rule VAR_DEC_TAG -> ;\n");
-			match(TOKEN_SEMICOLON);
-			break;
-		}
-		case TOKEN_BRACKET_OPEN: {
-			fprintf(yyout, "Rule VAR_DEC_TAG -> [ DIM_SIZES ]\n");
-			parse_DIM_SIZES();
-			match(TOKEN_BRACKET_CLOSE);
-			break;
-		}
-		default: {
-			match_multi(2, TOKEN_SEMICOLON, TOKEN_BRACKET_OPEN);
-			self_follow = (eTOKENS[7]){ TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE, TOKEN_VOID_TYPE, TOKEN_ID, TOKEN_CURLY_BRACE_OPEN, TOKEN_IF, TOKEN_RETURN };
-			error_recovery_multi(7, self_follow);
-		}
+	case TOKEN_SEMICOLON: {
+		fprintf(yyout, "Rule VAR_DEC_TAG -> ;\n");
+		match(TOKEN_SEMICOLON);
+		break;
+	}
+	case TOKEN_BRACKET_OPEN: {
+		fprintf(yyout, "Rule VAR_DEC_TAG -> [ DIM_SIZES ]\n");
+		parse_DIM_SIZES();
+		match(TOKEN_BRACKET_CLOSE);
+		break;
+	}
+	default: {
+		match_multi(2, TOKEN_SEMICOLON, TOKEN_BRACKET_OPEN);
+		self_follow = (eTOKENS[7]){ TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE, TOKEN_VOID_TYPE, TOKEN_ID, TOKEN_CURLY_BRACE_OPEN, TOKEN_IF, TOKEN_RETURN };
+		error_recovery_multi(7, self_follow);
+	}
 	}
 }
 
@@ -141,16 +167,16 @@ static void parse_DIM_SIZES() {
 	nextToken = next_token();
 	back_token();
 	switch (nextToken->kind) {
-		case TOKEN_INTEGER: {
-			fprintf(yyout, "Rule DIM_SIZES -> int_num DIM_SIZES_TAG\n");
-			match(TOKEN_INTEGER);
-			parse_DIM_SIZES_TAG();
-			break;
-		}
-		default: {
-			match(TOKEN_INTEGER);
-			error_recovery(TOKEN_BRACKET_CLOSE);
-		}
+	case TOKEN_INTEGER: {
+		fprintf(yyout, "Rule DIM_SIZES -> int_num DIM_SIZES_TAG\n");
+		match(TOKEN_INTEGER);
+		parse_DIM_SIZES_TAG();
+		break;
+	}
+	default: {
+		match(TOKEN_INTEGER);
+		error_recovery(TOKEN_BRACKET_CLOSE);
+	}
 	}
 }
 
@@ -158,21 +184,21 @@ static void parse_DIM_SIZES_TAG() {
 	nextToken = next_token();
 	back_token();
 	switch (nextToken->kind) {
-		case TOKEN_COMMA: {
-			fprintf(yyout, "Rule DIM_SIZES_TAG -> , DIM_SIZES\n");
-			match(TOKEN_COMMA);
-			parse_DIM_SIZES();
-			break;
-		}
-		// DIM_SIZES_TAG supports epsilon so adding cases for Follow(DIM_SIZES_TAG):
-		case TOKEN_BRACKET_CLOSE: {
-			fprintf(yyout, "Rule DIM_SIZES_TAG -> epsilon\n");
-			break;
-		}
-		default: {
-			match_multi(2, TOKEN_COMMA, TOKEN_BRACKET_CLOSE);
-			error_recovery(TOKEN_BRACKET_CLOSE);
-		}
+	case TOKEN_COMMA: {
+		fprintf(yyout, "Rule DIM_SIZES_TAG -> , DIM_SIZES\n");
+		match(TOKEN_COMMA);
+		parse_DIM_SIZES();
+		break;
+	}
+					// DIM_SIZES_TAG supports epsilon so adding cases for Follow(DIM_SIZES_TAG):
+	case TOKEN_BRACKET_CLOSE: {
+		fprintf(yyout, "Rule DIM_SIZES_TAG -> epsilon\n");
+		break;
+	}
+	default: {
+		match_multi(2, TOKEN_COMMA, TOKEN_BRACKET_CLOSE);
+		error_recovery(TOKEN_BRACKET_CLOSE);
+	}
 	}
 }
 
@@ -190,30 +216,31 @@ static void parse_GLOBAL_VARS_TAG() {
 	back_token();
 	back_token();
 	switch (nextToken->kind) {
-		case TOKEN_INTEGER_TYPE:
-		case TOKEN_FLOAT_TYPE: {
-			if (threeAheadKind == TOKEN_SEMICOLON || threeAheadKind == TOKEN_BRACKET_OPEN) {
-				//Treat as First(GLOBAL_VARS_TAG)
-				fprintf(yyout, "Rule GLOBAL_VARS_TAG-> VAR_DEC GLOBAL_VARS_TAG\n");
-				parse_VAR_DEC();
-				parse_GLOBAL_VARS_TAG();
-				break;
-			} else if (threeAheadKind == TOKEN_PARENTHESE_OPEN) {
-				//Treat as Follow(GLOBAL_VARS_TAG)
-				fprintf(yyout, "Rule GLOBAL_VARS_TAG-> epsilon\n");
-				break;
-			}
+	case TOKEN_INTEGER_TYPE:
+	case TOKEN_FLOAT_TYPE: {
+		if (threeAheadKind == TOKEN_SEMICOLON || threeAheadKind == TOKEN_BRACKET_OPEN) {
+			//Treat as First(GLOBAL_VARS_TAG)
+			fprintf(yyout, "Rule GLOBAL_VARS_TAG-> VAR_DEC GLOBAL_VARS_TAG\n");
+			parse_VAR_DEC();
+			parse_GLOBAL_VARS_TAG();
+			break;
 		}
-		// only case left to be added as a part of Follow(GOLBAL_VARS_TAG)
-		case TOKEN_VOID_TYPE: {
+		else if (threeAheadKind == TOKEN_PARENTHESE_OPEN) {
+			//Treat as Follow(GLOBAL_VARS_TAG)
 			fprintf(yyout, "Rule GLOBAL_VARS_TAG-> epsilon\n");
 			break;
 		}
-		default: {
-			match_multi(3, TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE, TOKEN_VOID_TYPE);
-			self_follow = (eTOKENS[3]){ TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE, TOKEN_VOID_TYPE };
-			error_recovery_multi(3, self_follow);
-		}
+	}
+						 // only case left to be added as a part of Follow(GOLBAL_VARS_TAG)
+	case TOKEN_VOID_TYPE: {
+		fprintf(yyout, "Rule GLOBAL_VARS_TAG-> epsilon\n");
+		break;
+	}
+	default: {
+		match_multi(3, TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE, TOKEN_VOID_TYPE);
+		self_follow = (eTOKENS[3]){ TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE, TOKEN_VOID_TYPE };
+		error_recovery_multi(3, self_follow);
+	}
 	}
 }
 
@@ -222,20 +249,20 @@ static void parse_FUNC_PREDEFS() {
 	nextToken = next_token();
 	back_token();
 	switch (nextToken->kind) {
-		case TOKEN_INTEGER_TYPE:
-		case TOKEN_FLOAT_TYPE:
-		case TOKEN_VOID_TYPE: {
-			fprintf(yyout, "Rule FUNC_PREDEFS -> FUNC_PROTOTYPE; FUNC_PREDEFS_TAG\n");
-			parse_FUNC_PROTOTYPE();
-			match(TOKEN_SEMICOLON);
-			parse_FUNC_PREDEFS_TAG();
-			break;
-		}
-		default: {
-			match_multi(3, TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE, TOKEN_VOID_TYPE);
-			self_follow = (eTOKENS[3]){ TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE, TOKEN_VOID_TYPE };
-			error_recovery_multi(3, self_follow);
-		}
+	case TOKEN_INTEGER_TYPE:
+	case TOKEN_FLOAT_TYPE:
+	case TOKEN_VOID_TYPE: {
+		fprintf(yyout, "Rule FUNC_PREDEFS -> FUNC_PROTOTYPE; FUNC_PREDEFS_TAG\n");
+		parse_FUNC_PROTOTYPE();
+		match(TOKEN_SEMICOLON);
+		parse_FUNC_PREDEFS_TAG();
+		break;
+	}
+	default: {
+		match_multi(3, TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE, TOKEN_VOID_TYPE);
+		self_follow = (eTOKENS[3]){ TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE, TOKEN_VOID_TYPE };
+		error_recovery_multi(3, self_follow);
+	}
 	}
 
 }
@@ -245,22 +272,22 @@ static void parse_FUNC_PROTOTYPE() {
 	nextToken = next_token();
 	back_token();
 	switch (nextToken->kind) {
-		case TOKEN_INTEGER_TYPE:
-		case TOKEN_FLOAT_TYPE:
-		case TOKEN_VOID_TYPE: {
-			fprintf(yyout, "Rule FUNC_PROTOTYPE->RETURNED_TYPE id(PARAMS)\n");
-			parse_RETURNED_TYPE();
-			match(TOKEN_ID);
-			match(TOKEN_PARENTHESE_OPEN);
-			parse_PARAMS();
-			match(TOKEN_PARENTHESE_CLOSE);
-			break;
-		}
-		default: {
-			match_multi(3, TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE, TOKEN_VOID_TYPE);
-			self_follow = (eTOKENS[2]){ TOKEN_CURLY_BRACE_OPEN, TOKEN_SEMICOLON };
-			error_recovery_multi(2, self_follow);
-		}
+	case TOKEN_INTEGER_TYPE:
+	case TOKEN_FLOAT_TYPE:
+	case TOKEN_VOID_TYPE: {
+		fprintf(yyout, "Rule FUNC_PROTOTYPE->RETURNED_TYPE id(PARAMS)\n");
+		parse_RETURNED_TYPE();
+		match(TOKEN_ID);
+		match(TOKEN_PARENTHESE_OPEN);
+		parse_PARAMS();
+		match(TOKEN_PARENTHESE_CLOSE);
+		break;
+	}
+	default: {
+		match_multi(3, TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE, TOKEN_VOID_TYPE);
+		self_follow = (eTOKENS[2]){ TOKEN_CURLY_BRACE_OPEN, TOKEN_SEMICOLON };
+		error_recovery_multi(2, self_follow);
+	}
 	}
 }
 
@@ -268,21 +295,21 @@ static void parse_RETURNED_TYPE() {
 	nextToken = next_token();
 	back_token();
 	switch (nextToken->kind) {
-		case TOKEN_INTEGER_TYPE:
-		case TOKEN_FLOAT_TYPE: {
-			fprintf(yyout, "Rule RETURNED_TYPE -> TYPE\n");
-			parse_TYPE();
-			break;
-		}
-		case TOKEN_VOID_TYPE: {
-			fprintf(yyout, "Rule RETURNED_TYPE -> void\n");
-			match(TOKEN_VOID_TYPE);
-			break;
-		}
-		default: {
-			match_multi(3, TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE, TOKEN_VOID_TYPE);
-			error_recovery(TOKEN_ID);
-		}
+	case TOKEN_INTEGER_TYPE:
+	case TOKEN_FLOAT_TYPE: {
+		fprintf(yyout, "Rule RETURNED_TYPE -> TYPE\n");
+		parse_TYPE();
+		break;
+	}
+	case TOKEN_VOID_TYPE: {
+		fprintf(yyout, "Rule RETURNED_TYPE -> void\n");
+		match(TOKEN_VOID_TYPE);
+		break;
+	}
+	default: {
+		match_multi(3, TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE, TOKEN_VOID_TYPE);
+		error_recovery(TOKEN_ID);
+	}
 	}
 }
 
@@ -290,21 +317,21 @@ static void parse_PARAMS() {
 	nextToken = next_token();
 	back_token();
 	switch (nextToken->kind) {
-		case TOKEN_INTEGER_TYPE:
-		case TOKEN_FLOAT_TYPE: {
-			fprintf(yyout, "Rule PARAMS -> PARAM_LIST\n");
-			parse_PARAM_LIST();
-			break;
-		}
-		// PARAMS supports epsilon so adding cases for Follow(PARAMS):
-		case TOKEN_PARENTHESE_CLOSE: {
-			fprintf(yyout, "Rule PARAMS -> epsilon\n");
-			break;
-		}
-		default: {
-			match_multi(2, TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE);
-			error_recovery(TOKEN_PARENTHESE_CLOSE);
-		}
+	case TOKEN_INTEGER_TYPE:
+	case TOKEN_FLOAT_TYPE: {
+		fprintf(yyout, "Rule PARAMS -> PARAM_LIST\n");
+		parse_PARAM_LIST();
+		break;
+	}
+						 // PARAMS supports epsilon so adding cases for Follow(PARAMS):
+	case TOKEN_PARENTHESE_CLOSE: {
+		fprintf(yyout, "Rule PARAMS -> epsilon\n");
+		break;
+	}
+	default: {
+		match_multi(2, TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE);
+		error_recovery(TOKEN_PARENTHESE_CLOSE);
+	}
 	}
 }
 
@@ -312,17 +339,17 @@ static void parse_PARAM_LIST() {
 	nextToken = next_token();
 	back_token();
 	switch (nextToken->kind) {
-		case TOKEN_INTEGER_TYPE:
-		case TOKEN_FLOAT_TYPE: {
-			fprintf(yyout, "Rule PARAM_LIST -> PARAM PARAM_LIST_TAG\n");
-			parse_PARAM();
-			parse_PARAM_LIST_TAG();
-			break;
-		}	
-		default: {
-			match_multi(2, TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE);
-			error_recovery(TOKEN_PARENTHESE_CLOSE);
-		}
+	case TOKEN_INTEGER_TYPE:
+	case TOKEN_FLOAT_TYPE: {
+		fprintf(yyout, "Rule PARAM_LIST -> PARAM PARAM_LIST_TAG\n");
+		parse_PARAM();
+		parse_PARAM_LIST_TAG();
+		break;
+	}
+	default: {
+		match_multi(2, TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE);
+		error_recovery(TOKEN_PARENTHESE_CLOSE);
+	}
 	}
 }
 
@@ -330,17 +357,17 @@ static void parse_PARAM() {
 	nextToken = next_token();
 	back_token();
 	switch (nextToken->kind) {
-		case TOKEN_INTEGER_TYPE:
-		case TOKEN_FLOAT_TYPE: {
-			fprintf(yyout, "Rule PARAM -> TYPE PARAM_TAG\n");
-			parse_TYPE();
-			parse_PARAM_TAG();
-			break;
-		}
-		default: {
-			match_multi(2, TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE);
-			error_recovery(TOKEN_PARENTHESE_CLOSE);
-		}
+	case TOKEN_INTEGER_TYPE:
+	case TOKEN_FLOAT_TYPE: {
+		fprintf(yyout, "Rule PARAM -> TYPE PARAM_TAG\n");
+		parse_TYPE();
+		parse_PARAM_TAG();
+		break;
+	}
+	default: {
+		match_multi(2, TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE);
+		error_recovery(TOKEN_PARENTHESE_CLOSE);
+	}
 	}
 }
 
@@ -348,16 +375,16 @@ static void parse_PARAM_TAG() {
 	nextToken = next_token();
 	back_token();
 	switch (nextToken->kind) {
-		case TOKEN_ID: {
-			fprintf(yyout, "Rule PARAM_TAG -> id PARAM_TAG_TAG\n");
-			match(TOKEN_ID);
-			parse_PARAM_TAG_TAG();
-			break;
-		}
-		default: {
-			match(TOKEN_ID);
-			error_recovery(TOKEN_PARENTHESE_CLOSE);
-		}
+	case TOKEN_ID: {
+		fprintf(yyout, "Rule PARAM_TAG -> id PARAM_TAG_TAG\n");
+		match(TOKEN_ID);
+		parse_PARAM_TAG_TAG();
+		break;
+	}
+	default: {
+		match(TOKEN_ID);
+		error_recovery(TOKEN_PARENTHESE_CLOSE);
+	}
 	}
 }
 
@@ -365,22 +392,22 @@ static void parse_PARAM_TAG_TAG() {
 	nextToken = next_token();
 	back_token();
 	switch (nextToken->kind) {
-		case TOKEN_BRACKET_OPEN: {
-			fprintf(yyout, "Rule PARAM_TAG_TAG -> [ DIM_SIZES ]\n");
-			match(TOKEN_BRACKET_OPEN);
-			parse_DIM_SIZES();
-			match(TOKEN_BRACKET_CLOSE);
-			break;
-		}
-		// PARAM_TAG_TAG supports epsilon so adding cases for Follow(PARAM_TAG_TAG):
-		case TOKEN_PARENTHESE_CLOSE: {
-			fprintf(yyout, "Rule PARAM_TAG_TAG -> epsilon\n");
-			break;
-		}
-		default: {
-			match(TOKEN_ID);
-			error_recovery(TOKEN_PARENTHESE_CLOSE);
-		}
+	case TOKEN_BRACKET_OPEN: {
+		fprintf(yyout, "Rule PARAM_TAG_TAG -> [ DIM_SIZES ]\n");
+		match(TOKEN_BRACKET_OPEN);
+		parse_DIM_SIZES();
+		match(TOKEN_BRACKET_CLOSE);
+		break;
+	}
+						   // PARAM_TAG_TAG supports epsilon so adding cases for Follow(PARAM_TAG_TAG):
+	case TOKEN_PARENTHESE_CLOSE: {
+		fprintf(yyout, "Rule PARAM_TAG_TAG -> epsilon\n");
+		break;
+	}
+	default: {
+		match(TOKEN_ID);
+		error_recovery(TOKEN_PARENTHESE_CLOSE);
+	}
 	}
 }
 
@@ -388,22 +415,22 @@ static void parse_PARAM_LIST_TAG() {
 	nextToken = next_token();
 	back_token();
 	switch (nextToken->kind) {
-		case TOKEN_COMMA: {
-			fprintf(yyout, "Rule PARAM_LIST_TAG -> , PARAM PARAM_LIST_TAG\n");
-			match(TOKEN_COMMA);
-			parse_PARAM();
-			parse_PARAM_LIST_TAG();
-			break;
-		}
-		// PARAM_TAG_TAG supports epsilon so adding cases for Follow(PARAM_TAG_TAG):
-		case TOKEN_PARENTHESE_CLOSE: {
-			fprintf(yyout, "Rule PARAM_LIST_TAG -> epsilon\n");
-			break;
-		}
-		default: {
-			match_multi(2, TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE);
-			error_recovery(TOKEN_PARENTHESE_CLOSE);
-		}
+	case TOKEN_COMMA: {
+		fprintf(yyout, "Rule PARAM_LIST_TAG -> , PARAM PARAM_LIST_TAG\n");
+		match(TOKEN_COMMA);
+		parse_PARAM();
+		parse_PARAM_LIST_TAG();
+		break;
+	}
+					// PARAM_TAG_TAG supports epsilon so adding cases for Follow(PARAM_TAG_TAG):
+	case TOKEN_PARENTHESE_CLOSE: {
+		fprintf(yyout, "Rule PARAM_LIST_TAG -> epsilon\n");
+		break;
+	}
+	default: {
+		match_multi(2, TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE);
+		error_recovery(TOKEN_PARENTHESE_CLOSE);
+	}
 	}
 }
 
@@ -414,6 +441,633 @@ static void parse_FUNC_PREDEFS_TAG() {
 static void parse_FUNC_FULL_DEFS() {
 	nextToken = next_token();
 }
+
+
+// Tom's methods (HIGH RISK CODE; BETTER TRASH IT RIGHT AWAY!).
+
+static void parse_COMP_STMT() {
+	nextToken = next_token();
+	back_token();
+
+	switch (nextToken->kind) {
+	case TOKEN_CURLY_BRACE_OPEN: {
+		fprintf(yyout, "Rule COMP_STMT -> { VAR_DEC_LIST STMT_LIST }\n");
+		match(TOKEN_CURLY_BRACE_OPEN);
+		parse_VAR_DEC_LIST();
+		parse_STMT_LIST();
+		match(TOKEN_CURLY_BRACE_CLOSE);
+		break;
+	}
+	default: {
+		match(TOKEN_CURLY_BRACE_OPEN);
+		error_recovery_multi(2, TOKEN_CURLY_BRACE_CLOSE, TOKEN_SEMICOLON);
+	}
+	}
+}
+static void parse_VAR_DEC_LIST() {
+	nextToken = next_token();
+	back_token();
+
+	switch (nextToken->kind) {
+	case TOKEN_INTEGER_TYPE:
+	case TOKEN_FLOAT_TYPE: {
+		fprintf(yyout, "Rule VAR_DEC_LIST -> VAR_DEC_LIST_TAG\n");
+		parse_VAR_DEC_LIST_TAG();
+		break;
+	}
+	// VAR_DEC_LIST supports epsilon so adding cases for Follow(VAR_DEC_LIST):
+	case TOKEN_ID:
+	case TOKEN_CURLY_BRACE_OPEN:
+	case TOKEN_IF:
+	case TOKEN_RETURN: {
+		fprintf(yyout, "Rule VAR_DEC_LIST -> epsilon\n");
+		break;
+	}
+	default: {
+		match_multi(2, TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE);
+		error_recovery_multi(4, TOKEN_ID, TOKEN_CURLY_BRACE_OPEN, TOKEN_IF, TOKEN_RETURN);
+	}
+	}
+}
+static void parse_VAR_DEC_LIST_TAG() {
+	nextToken = next_token();
+	back_token();
+
+	switch (nextToken->kind) {
+		// PUT FIRST(X) HERE
+	case TOKEN_INTEGER_TYPE:
+	case TOKEN_FLOAT_TYPE: {
+		fprintf(yyout, "Rule VAR_DEC_LIST_TAG -> VAR_DEC VAR_DEC_LIST_TAG\n");
+		parse_VAR_DEC();
+		parse_VAR_DEC_LIST_TAG();
+		break;
+	}
+	// VAR_DEC_LIST_TAG supports epsilon so adding cases for Follow(VAR_DEC_LIST_TAG):
+	case TOKEN_ID:
+	case TOKEN_CURLY_BRACE_OPEN:
+	case TOKEN_IF:
+	case TOKEN_RETURN: {
+		fprintf(yyout, "Rule VAR_DEC_LIST_TAG -> epsilon\n");
+		break;
+	}
+	default: {
+		match_multi(2, TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE);
+		error_recovery_multi(4, TOKEN_ID, TOKEN_CURLY_BRACE_OPEN, TOKEN_IF, TOKEN_RETURN);
+	}
+	}
+}
+static void parse_STMT_LIST() {
+	nextToken = next_token();
+	back_token();
+
+	switch (nextToken->kind) {
+	// First(X)
+	case TOKEN_ID:
+	case TOKEN_CURLY_BRACE_OPEN:
+	case TOKEN_IF:
+	case TOKEN_RETURN: {
+		fprintf(yyout, "Rule STMT_LIST ->  STMT STMT_LIST_TAG\n");
+		parse_STMT();
+		parse_STMT_LIST_TAG();
+		break;
+	}
+	default: {
+		match_multi(4, TOKEN_ID, TOKEN_CURLY_BRACE_OPEN, TOKEN_IF, TOKEN_RETURN); // First(X)
+		error_recovery_multi(1, TOKEN_CURLY_BRACE_CLOSE); // Follow(X)
+	}
+	}
+}
+static void parse_STMT_LIST_TAG() {
+	nextToken = next_token();
+	back_token();
+
+	switch (nextToken->kind) {
+	// First(X)
+	case TOKEN_SEMICOLON: {
+		fprintf(yyout, "Rule STMT_LIST_TAG -> ; STMT STMT_LIST_TAG\n");
+		match(TOKEN_SEMICOLON);
+		parse_STMT();
+		parse_STMT_LIST_TAG();
+		break;
+	}
+	// rule supports epsilon so adding cases for Follow(X):
+	case TOKEN_CURLY_BRACE_CLOSE: {
+		fprintf(yyout, "Rule STMT_LIST_TAG -> epsilon\n");
+		break;
+	}
+	default: {
+		match_multi(1, TOKEN_SEMICOLON); // First(X)
+		error_recovery_multi(1, TOKEN_CURLY_BRACE_CLOSE); // Follow(X)
+	}
+	}
+}
+static void parse_STMT() {
+	nextToken = next_token();
+	back_token();
+
+	switch (nextToken->kind) {
+		// First(X)
+	case TOKEN_ID: {
+		fprintf(yyout, "Rule STMT ->  id STMT_TAG\n");
+		match(TOKEN_ID);
+		parse_STMT_TAG();
+		break;
+	}
+	case TOKEN_CURLY_BRACE_OPEN: {
+		fprintf(yyout, "Rule STMT ->  COMP_STMT\n");
+		parse_COMP_STMT();
+		break;
+	}
+	case TOKEN_IF: {
+		fprintf(yyout, "Rule STMT ->  IF_STMT\n");
+		parse_IF_STMT();
+		break;
+	}
+	case TOKEN_RETURN: {
+		fprintf(yyout, "Rule STMT ->  RETURN_STMT\n");
+		parse_RETURN_STMT();
+		break;
+	}
+	default: {
+		match_multi(4, TOKEN_ID, TOKEN_CURLY_BRACE_OPEN, TOKEN_IF, TOKEN_RETURN); // First(X)
+		error_recovery_multi(2, TOKEN_SEMICOLON, TOKEN_CURLY_BRACE_CLOSE); // Follow(X)
+	}
+	}
+}
+static void parse_STMT_TAG() {
+	nextToken = next_token();
+	back_token();
+
+	switch (nextToken->kind) {
+		// First(X)
+	case TOKEN_ID: {
+		fprintf(yyout, "Rule STMT_TAG ->    VAR# =EXPR \n");
+		parse_VAR_TAG();
+		match(TOKEN_AR_EQUAL);
+		parse_EXPR();
+		break;
+	}
+	case TOKEN_PARENTHESE_OPEN: {
+		fprintf(yyout, "Rule STMT_TAG ->   ( ARGS )\n");
+		match(TOKEN_PARENTHESE_OPEN);
+		parse_ARGS();
+		match(TOKEN_PARENTHESE_CLOSE);
+		break;
+	}
+	default: {
+		match_multi(2, TOKEN_ID, TOKEN_PARENTHESE_OPEN); // First(X)
+		error_recovery_multi(2, TOKEN_SEMICOLON, TOKEN_CURLY_BRACE_CLOSE); // Follow(X)
+	}
+	}
+}
+static void parse_IF_STMT() {
+	nextToken = next_token();
+	back_token();
+
+	switch (nextToken->kind) {
+	// First(X)
+	case TOKEN_IF: {
+		fprintf(yyout, "Rule IF_STMT ->  if (CONDITION) STMT\n");
+		match(TOKEN_IF);
+		match(TOKEN_PARENTHESE_OPEN);
+		parse_CONDITION();
+		match(TOKEN_PARENTHESE_CLOSE);
+		parse_STMT();
+		break;
+	}
+	default: {
+		match_multi(1, TOKEN_IF); // First(X)
+		error_recovery_multi(2, TOKEN_SEMICOLON, TOKEN_CURLY_BRACE_CLOSE); // Follow(X)
+	}
+	}
+}
+static void parse_CALL() {
+	nextToken = next_token();
+	back_token();
+
+	switch (nextToken->kind) {
+		// First(X)
+	case TOKEN_ID: {
+		fprintf(yyout, "Rule CALL ->  id ( ARGS )\n");
+		match(TOKEN_ID);
+		match(TOKEN_PARENTHESE_OPEN);
+		parse_ARGS();
+		match(TOKEN_PARENTHESE_CLOSE);
+		break;
+	}
+	default: {
+		match_multi(1, TOKEN_ID); // First(X)
+		// TODO: Validate - no Follow(X)?
+	}
+	}
+}
+static void parse_ARGS() {
+	nextToken = next_token();
+	back_token();
+
+	switch (nextToken->kind) {
+		// First(X)
+	case TOKEN_ID:
+	case TOKEN_INTEGER:
+	case TOKEN_FLOAT:
+	case TOKEN_PARENTHESE_OPEN: {
+		fprintf(yyout, "Rule _ARGS ->  ARG_LIST \n");
+		parse_ARG_LIST();
+		break;
+	}
+	// rule supports epsilon so adding cases for Follow(X):
+	case TOKEN_PARENTHESE_CLOSE: {
+		fprintf(yyout, "Rule _ARGS -> epsilon\n");
+		break;
+	}
+	default: {
+		match_multi(4, TOKEN_ID, TOKEN_INTEGER, TOKEN_FLOAT, TOKEN_PARENTHESE_OPEN); // First(X)
+		error_recovery_multi(1, TOKEN_PARENTHESE_CLOSE); // Follow(X)
+	}
+	}
+}
+static void parse_ARG_LIST() {
+	nextToken = next_token();
+	back_token();
+
+	switch (nextToken->kind) {
+		// First(X)
+	case TOKEN_ID:
+	case TOKEN_INTEGER:
+	case TOKEN_FLOAT:
+	case TOKEN_PARENTHESE_OPEN: {
+		fprintf(yyout, "Rule ARG_LIST ->  EXPR ARG_LIST_TAG\n");
+		parse_EXPR();
+		parse_ARG_LIST_TAG();
+		break;
+	}
+	default: {
+		match_multi(4, TOKEN_ID, TOKEN_INTEGER, TOKEN_FLOAT, TOKEN_PARENTHESE_OPEN); // First(X)
+		error_recovery_multi(1, TOKEN_PARENTHESE_CLOSE); // Follow(X)
+	}
+	}
+}
+static void parse_ARG_LIST_TAG() {
+	nextToken = next_token();
+	back_token();
+
+	switch (nextToken->kind) {
+	// First(X)
+	case TOKEN_COMMA: {
+		fprintf(yyout, "Rule ARG_LIST_TAG ->   , EXPR ARG_LIST_TAG\n");
+		match(TOKEN_COMMA);
+		parse_ARG_LIST_TAG();
+		break;
+	}
+	// rule supports epsilon so adding cases for Follow(X):
+	case TOKEN_PARENTHESE_CLOSE: {
+		fprintf(yyout, "Rule ARG_LIST_TAG -> epsilon\n");
+		break;
+	}
+	default: {
+		match_multi(1, TOKEN_COMMA); // First(X)
+		error_recovery_multi(1, TOKEN_CURLY_BRACE_CLOSE); // Follow(X)
+	}
+	}
+}
+static void parse_RETURN_STMT() {
+	nextToken = next_token();
+	back_token();
+
+	switch (nextToken->kind) {
+	// First(X)
+	case TOKEN_RETURN: {
+		fprintf(yyout, "Rule RETURN_STMT ->   return RETURN_STMT_TAG\n");
+		match(TOKEN_RETURN);
+		parse_RETURN_STMT_TAG();
+		break;
+	}
+	default: {
+		match_multi(1, TOKEN_RETURN); // First(X)
+		error_recovery_multi(2, TOKEN_SEMICOLON, TOKEN_CURLY_BRACE_CLOSE); // Follow(X)
+	}
+	}
+}
+static void parse_RETURN_STMT_TAG() {
+	nextToken = next_token();
+	back_token();
+
+	switch (nextToken->kind) {
+		// First(X)
+	case TOKEN_ID:
+	case TOKEN_INTEGER:
+	case TOKEN_FLOAT:
+	case TOKEN_PARENTHESE_OPEN: {
+		fprintf(yyout, "Rule RETURN_STMT_TAG ->  EXPR \n");
+		parse_EXPR();
+		break;
+	}
+	// rule supports epsilon so adding cases for Follow(X):
+	case TOKEN_SEMICOLON:
+	case TOKEN_CURLY_BRACE_CLOSE: {
+		fprintf(yyout, "Rule RETURN_STMT_TAG -> epsilon\n");
+		break;
+	}
+	default: {
+		match_multi(4, TOKEN_ID, TOKEN_INTEGER, TOKEN_FLOAT, TOKEN_PARENTHESE_OPEN); // First(X)
+		error_recovery_multi(2, TOKEN_SEMICOLON, TOKEN_CURLY_BRACE_CLOSE); // Follow(X)
+	}
+	}
+}
+static void parse_VAR() {
+	nextToken = next_token();
+	back_token();
+
+	switch (nextToken->kind) {
+	// First(X)
+	case TOKEN_ID: {
+		fprintf(yyout, "Rule VAR ->  id VAR_TAG\n");
+		match(TOKEN_ID);
+		parse_VAR_TAG();
+		break;
+	}
+	default: {
+		match_multi(1, TOKEN_ID); // First(X)
+		// TODO: Validate empty Follow(X)
+	}
+	}
+}
+static void parse_VAR_TAG() {
+	nextToken = next_token();
+	back_token();
+
+	switch (nextToken->kind) {
+		// First(X)
+	case TOKEN_BRACKET_OPEN: {
+		fprintf(yyout, "Rule VAR_TAG ->  xxxxxxxxxxxxxxxxxxx\n");
+		match(TOKEN_BRACKET_OPEN);
+		parse_EXPR_LIST();
+		match(TOKEN_BRACKET_CLOSE);
+		break;
+	}
+	// rule supports epsilon so adding cases for Follow(X):
+	case TOKEN_AR_MUL:
+	case TOKEN_AR_ADD:
+
+
+	case TOKEN_SEMICOLON:
+	case TOKEN_CURLY_BRACE_CLOSE:
+	case TOKEN_COMMA:
+	case TOKEN_BRACKET_CLOSE:
+	case TOKEN_COMP_E:
+	case TOKEN_COMP_NE:
+	case TOKEN_COMP_GT:
+	case TOKEN_COMP_GTE:
+	case TOKEN_COMP_LT:
+	case TOKEN_COMP_LTE:
+	case TOKEN_PARENTHESE_CLOSE:
+
+
+	case TOKEN_AR_EQUAL: {
+		fprintf(yyout, "Rule VAR_TAG -> epsilon\n");
+		break;
+	}
+	default: {
+		match_multi(1, TOKEN_BRACKET_OPEN); // First(X)
+		error_recovery_multi(14, TOKEN_AR_MUL, TOKEN_AR_ADD, TOKEN_SEMICOLON, TOKEN_CURLY_BRACE_CLOSE, TOKEN_COMMA, TOKEN_BRACKET_CLOSE,
+			TOKEN_COMP_E, TOKEN_COMP_NE, TOKEN_COMP_GT, TOKEN_COMP_GTE, TOKEN_COMP_LT, TOKEN_COMP_LTE, TOKEN_PARENTHESE_CLOSE); // Follow(X)
+	}
+	}
+}
+static void parse_EXPR_LIST() {
+	nextToken = next_token();
+	back_token();
+
+	switch (nextToken->kind) {
+		// First(X)
+	case TOKEN_ID:
+	case TOKEN_INTEGER:
+	case TOKEN_FLOAT:
+	case TOKEN_PARENTHESE_OPEN: {
+		fprintf(yyout, "Rule EXPR_LIST ->  EXPR EXPR_LIST_TAG\n");
+		parse_EXPR();
+		parse_EXPR_LIST_TAG();
+		break;
+	}
+	default: {
+		match_multi(4, TOKEN_ID, TOKEN_INTEGER, TOKEN_FLOAT, TOKEN_PARENTHESE_OPEN); // First(X)
+		error_recovery_multi(1, TOKEN_BRACKET_CLOSE); // Follow(X)
+	}
+	}
+}
+static void parse_EXPR_LIST_TAG() {
+	nextToken = next_token();
+	back_token();
+
+	switch (nextToken->kind) {
+	// First(X)
+	case TOKEN_COMMA: {
+		fprintf(yyout, "Rule EXPR_LIST_TAG ->   , EXPR EXPR_LIST_TAG\n");
+		match(TOKEN_COMMA);
+		parse_EXPR();
+		parse_EXPR_LIST_TAG();
+		break;
+	}
+	// rule supports epsilon so adding cases for Follow(X):
+	case TOKEN_BRACKET_CLOSE: {
+		fprintf(yyout, "Rule EXPR_LIST_TAG -> epsilon\n");
+		break;
+	}
+	default: {
+		match_multi(1, TOKEN_COMMA); // First(X)
+		error_recovery_multi(1, TOKEN_BRACKET_CLOSE); // Follow(X)
+	}
+	}
+}
+static void parse_CONDITION() {
+	//TODO: Need to split rel_op??
+}
+static void parse_EXPR() {
+	nextToken = next_token();
+	back_token();
+
+	switch (nextToken->kind) {
+	// First(X)
+	case TOKEN_ID:
+	case TOKEN_INTEGER:
+	case TOKEN_FLOAT:
+	case TOKEN_PARENTHESE_OPEN: {
+		fprintf(yyout, "Rule EXPR ->  TERM EXPR_TAG\n");
+		parse_TERM();
+		parse_EXPR_TAG();
+		break;
+	}
+	default: {
+		match_multi(4, TOKEN_ID, TOKEN_INTEGER, TOKEN_FLOAT, TOKEN_PARENTHESE_OPEN); // First(X)
+		error_recovery_multi(11, TOKEN_SEMICOLON, TOKEN_CURLY_BRACE_CLOSE, TOKEN_COMMA, TOKEN_BRACKET_CLOSE, TOKEN_COMP_E,
+			TOKEN_COMP_NE, TOKEN_COMP_GT, TOKEN_COMP_GTE, TOKEN_COMP_LT, TOKEN_COMP_LTE, TOKEN_PARENTHESE_CLOSE); // Follow(X)
+	}
+	}
+}
+static void parse_EXPR_TAG() {
+	nextToken = next_token();
+	back_token();
+
+	switch (nextToken->kind) {
+	// First(X)
+	case TOKEN_AR_ADD: {
+		fprintf(yyout, "Rule EXPR_TAG ->  + TERM EXPR_TAG\n");
+		match(TOKEN_AR_ADD);
+		parse_TERM();
+		parse_EXPR_TAG();
+		break;
+	}
+	// rule supports epsilon so adding cases for Follow(X):
+	// TODO: Follow(EXPR#) = Follow(EXPR#) = empty set?
+	default: {
+		match_multi(1, TOKEN_AR_ADD); // First(X)
+		//error_recovery_multi(1, TOKEN_CURLY_BRACE_CLOSE); // Follow(X)
+		// TODO: Follow(EXPR#) = Follow(EXPR#) = empty set? no error recovery?
+	}
+	}
+}
+static void parse_TERM() {
+	nextToken = next_token();
+	back_token();
+
+	switch (nextToken->kind) {
+	// First(X)
+	case TOKEN_ID:
+	case TOKEN_INTEGER:
+	case TOKEN_FLOAT:
+	case TOKEN_PARENTHESE_OPEN: {
+		fprintf(yyout, "Rule TERM ->  FACTOR TERM_TAG\n");
+		parse_FACTOR();
+		parse_TERM_TAG();
+		break;
+	}
+	default: {
+		match_multi(4, TOKEN_ID, TOKEN_INTEGER, TOKEN_FLOAT, TOKEN_PARENTHESE_OPEN); // First(X)
+		error_recovery_multi(12, TOKEN_AR_ADD, TOKEN_SEMICOLON, TOKEN_CURLY_BRACE_CLOSE, TOKEN_COMMA, TOKEN_BRACKET_CLOSE,
+			TOKEN_COMP_E, TOKEN_COMP_NE, TOKEN_COMP_GT, TOKEN_COMP_GTE, TOKEN_COMP_LT, TOKEN_COMP_LTE, TOKEN_PARENTHESE_CLOSE); // Follow(X)
+	}
+	}
+}
+static void parse_TERM_TAG() {
+	nextToken = next_token();
+	back_token();
+
+	switch (nextToken->kind) {
+		// First(X)
+	case TOKEN_AR_MUL: {
+		fprintf(yyout, "Rule TERM_TAG ->  * FACTOR TERM_TAG\n");
+		match(TOKEN_AR_MUL);
+		parse_FACTOR();
+		parse_TERM_TAG();
+		break;
+	}
+	// rule supports epsilon so adding cases for Follow(X):
+	case TOKEN_AR_ADD:
+	case TOKEN_SEMICOLON:
+	case TOKEN_CURLY_BRACE_CLOSE:
+	case TOKEN_COMMA:
+	case TOKEN_BRACKET_CLOSE:
+	case TOKEN_COMP_E:
+	case TOKEN_COMP_NE:
+	case TOKEN_COMP_GT:
+	case TOKEN_COMP_GTE:
+	case TOKEN_COMP_LT:
+	case TOKEN_COMP_LTE:
+	case TOKEN_PARENTHESE_CLOSE: {
+		fprintf(yyout, "Rule TERM_TAG -> epsilon\n");
+		break;
+	}
+	default: {
+		match_multi(1, TOKEN_AR_MUL); // First(X)
+		error_recovery_multi(12, TOKEN_AR_ADD, TOKEN_SEMICOLON, TOKEN_CURLY_BRACE_CLOSE, TOKEN_COMMA, TOKEN_BRACKET_CLOSE,
+			TOKEN_COMP_E, TOKEN_COMP_NE, TOKEN_COMP_GT, TOKEN_COMP_GTE, TOKEN_COMP_LT, TOKEN_COMP_LTE, TOKEN_PARENTHESE_CLOSE); // Follow(X)
+	}
+	}
+}
+static void parse_FACTOR() {
+	nextToken = next_token();
+	back_token();
+
+	switch (nextToken->kind) {
+	// First(X)
+	case TOKEN_ID: {
+		fprintf(yyout, "Rule FACTOR ->  id FACTOR_TAG\n");
+		match(TOKEN_ID);
+		parse_FACTOR_TAG();
+		break;
+	}
+	case TOKEN_INTEGER: {
+		fprintf(yyout, "Rule FACTOR ->  int_num \n");
+		match(TOKEN_INTEGER);
+		break;
+	}
+	case TOKEN_FLOAT: {
+		fprintf(yyout, "Rule FACTOR ->  float_num  \n");
+		match(TOKEN_FLOAT);
+		break;
+	}
+	case TOKEN_PARENTHESE_OPEN: {
+		fprintf(yyout, "Rule FACTOR ->  (EXPR)\n");
+		match(TOKEN_PARENTHESE_OPEN);
+		parse_EXPR();
+		match(TOKEN_PARENTHESE_CLOSE);
+		break;
+	}
+	default: {
+		match_multi(4, TOKEN_ID, TOKEN_INTEGER, TOKEN_FLOAT, TOKEN_PARENTHESE_OPEN); // First(X)
+		error_recovery_multi(13, TOKEN_AR_MUL, TOKEN_AR_ADD, TOKEN_SEMICOLON, TOKEN_CURLY_BRACE_CLOSE, TOKEN_COMMA, TOKEN_BRACKET_CLOSE,
+			TOKEN_COMP_E, TOKEN_COMP_NE, TOKEN_COMP_GT, TOKEN_COMP_GTE, TOKEN_COMP_LT, TOKEN_COMP_LTE, TOKEN_PARENTHESE_CLOSE); // Follow(X)
+	}
+	}
+}
+static void parse_FACTOR_TAG() {
+	nextToken = next_token();
+	back_token();
+
+	switch (nextToken->kind) {
+	// First(X)
+	case TOKEN_BRACKET_OPEN: {
+		fprintf(yyout, "Rule FACTOR_TAG ->  VAR_TAG\n");
+		parse_VAR_TAG();
+		break;
+	}
+	case TOKEN_PARENTHESE_OPEN: {
+		fprintf(yyout, "Rule FACTOR_TAG ->  ( ARGS )\n");
+		match(TOKEN_PARENTHESE_OPEN);
+		parse_ARGS();
+		match(TOKEN_PARENTHESE_CLOSE);
+		break;
+	}
+	// rule supports epsilon so adding cases for Follow(X):
+	case TOKEN_AR_MUL:
+	case TOKEN_AR_ADD:
+	case TOKEN_SEMICOLON:
+	case TOKEN_CURLY_BRACE_CLOSE:
+	case TOKEN_COMMA:
+	case TOKEN_BRACKET_CLOSE:
+	case TOKEN_COMP_E:
+	case TOKEN_COMP_NE:
+	case TOKEN_COMP_GT:
+	case TOKEN_COMP_GTE:
+	case TOKEN_COMP_LT:
+	case TOKEN_COMP_LTE:
+	case TOKEN_PARENTHESE_CLOSE: {
+		fprintf(yyout, "Rule FACTOR_TAG -> epsilon\n");
+		break;
+	}
+	default: {
+		match_multi(2, TOKEN_BRACKET_OPEN, TOKEN_PARENTHESE_OPEN); // First(X)
+		error_recovery_multi(13, TOKEN_AR_MUL, TOKEN_AR_ADD, TOKEN_SEMICOLON, TOKEN_CURLY_BRACE_CLOSE, TOKEN_COMMA, TOKEN_BRACKET_CLOSE,
+			TOKEN_COMP_E, TOKEN_COMP_NE, TOKEN_COMP_GT, TOKEN_COMP_GTE, TOKEN_COMP_LT, TOKEN_COMP_LTE, TOKEN_PARENTHESE_CLOSE); // Follow(X)
+	}
+	}
+}
+
+// FUCKING KILL ME
+
+
+
+
 
 /*
 * check if the current token equls to the token supplied, otherwise
@@ -429,7 +1083,6 @@ static void error_recovery(eTOKENS follow) {
 	} while (nextToken->kind != TOKEN_EOF);
 	nextToken = back_token();
 }
-
 /*
 * check if one of the tokens supplied equals to current token, otherwise
 * loops threw next_token() until encountered with one of the tokens supplied.

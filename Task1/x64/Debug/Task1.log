@@ -1,0 +1,60 @@
+﻿  parser.c
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(463,50): warning C4047: 'function': 'eTOKENS *' differs in levels of indirection from 'int'
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(463,50): warning C4024: 'error_recovery_multi': different types for formal and actual parameter 2
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(463,67): warning C4020: 'error_recovery_multi': too many actual parameters
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(488,35): warning C4047: 'function': 'eTOKENS *' differs in levels of indirection from 'int'
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(488,35): warning C4024: 'error_recovery_multi': different types for formal and actual parameter 2
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(488,59): warning C4020: 'error_recovery_multi': too many actual parameters
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(515,35): warning C4047: 'function': 'eTOKENS *' differs in levels of indirection from 'int'
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(515,35): warning C4024: 'error_recovery_multi': different types for formal and actual parameter 2
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(515,59): warning C4020: 'error_recovery_multi': too many actual parameters
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(536,50): warning C4047: 'function': 'eTOKENS *' differs in levels of indirection from 'int'
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(536,50): warning C4024: 'error_recovery_multi': different types for formal and actual parameter 2
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(560,50): warning C4047: 'function': 'eTOKENS *' differs in levels of indirection from 'int'
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(560,50): warning C4024: 'error_recovery_multi': different types for formal and actual parameter 2
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(593,42): warning C4047: 'function': 'eTOKENS *' differs in levels of indirection from 'int'
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(593,42): warning C4024: 'error_recovery_multi': different types for formal and actual parameter 2
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(593,67): warning C4020: 'error_recovery_multi': too many actual parameters
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(619,42): warning C4047: 'function': 'eTOKENS *' differs in levels of indirection from 'int'
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(619,42): warning C4024: 'error_recovery_multi': different types for formal and actual parameter 2
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(619,67): warning C4020: 'error_recovery_multi': too many actual parameters
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(640,42): warning C4047: 'function': 'eTOKENS *' differs in levels of indirection from 'int'
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(640,42): warning C4024: 'error_recovery_multi': different types for formal and actual parameter 2
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(640,67): warning C4020: 'error_recovery_multi': too many actual parameters
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(685,49): warning C4047: 'function': 'eTOKENS *' differs in levels of indirection from 'int'
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(685,49): warning C4024: 'error_recovery_multi': different types for formal and actual parameter 2
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(706,49): warning C4047: 'function': 'eTOKENS *' differs in levels of indirection from 'int'
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(706,49): warning C4024: 'error_recovery_multi': different types for formal and actual parameter 2
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(729,50): warning C4047: 'function': 'eTOKENS *' differs in levels of indirection from 'int'
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(729,50): warning C4024: 'error_recovery_multi': different types for formal and actual parameter 2
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(747,42): warning C4047: 'function': 'eTOKENS *' differs in levels of indirection from 'int'
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(747,42): warning C4024: 'error_recovery_multi': different types for formal and actual parameter 2
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(747,67): warning C4020: 'error_recovery_multi': too many actual parameters
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(773,42): warning C4047: 'function': 'eTOKENS *' differs in levels of indirection from 'int'
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(773,42): warning C4024: 'error_recovery_multi': different types for formal and actual parameter 2
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(773,67): warning C4020: 'error_recovery_multi': too many actual parameters
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(832,40): warning C4047: 'function': 'eTOKENS *' differs in levels of indirection from 'int'
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(832,40): warning C4024: 'error_recovery_multi': different types for formal and actual parameter 2
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(832,54): warning C4020: 'error_recovery_multi': too many actual parameters
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(854,46): warning C4047: 'function': 'eTOKENS *' differs in levels of indirection from 'int'
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(854,46): warning C4024: 'error_recovery_multi': different types for formal and actual parameter 2
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(878,46): warning C4047: 'function': 'eTOKENS *' differs in levels of indirection from 'int'
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(878,46): warning C4024: 'error_recovery_multi': different types for formal and actual parameter 2
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(902,43): warning C4047: 'function': 'eTOKENS *' differs in levels of indirection from 'int'
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(902,43): warning C4024: 'error_recovery_multi': different types for formal and actual parameter 2
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(902,68): warning C4020: 'error_recovery_multi': too many actual parameters
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(946,40): warning C4047: 'function': 'eTOKENS *' differs in levels of indirection from 'int'
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(946,40): warning C4024: 'error_recovery_multi': different types for formal and actual parameter 2
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(946,57): warning C4020: 'error_recovery_multi': too many actual parameters
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(982,40): warning C4047: 'function': 'eTOKENS *' differs in levels of indirection from 'int'
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(982,40): warning C4024: 'error_recovery_multi': different types for formal and actual parameter 2
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(982,57): warning C4020: 'error_recovery_multi': too many actual parameters
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(1018,40): warning C4047: 'function': 'eTOKENS *' differs in levels of indirection from 'int'
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(1018,40): warning C4024: 'error_recovery_multi': different types for formal and actual parameter 2
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(1018,54): warning C4020: 'error_recovery_multi': too many actual parameters
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(1061,40): warning C4047: 'function': 'eTOKENS *' differs in levels of indirection from 'int'
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(1061,40): warning C4024: 'error_recovery_multi': different types for formal and actual parameter 2
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(1061,54): warning C4020: 'error_recovery_multi': too many actual parameters
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(1079,26): warning C4047: '==': 'int' differs in levels of indirection from 'Token *'
+D:\git-repositories\CompilationTheoryProject\Task1\parser.c(1096,31): warning C4047: '==': 'int' differs in levels of indirection from 'Token *'
+  Task1.vcxproj -> D:\git-repositories\CompilationTheoryProject\Task1\x64\Debug\Task1.exe
