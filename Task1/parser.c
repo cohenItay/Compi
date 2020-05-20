@@ -526,26 +526,17 @@ static void parse_FUNC_WITH_BODY() {
 
 static void parse_FUNC_FULL_DEFS_TAG() {
 	eTOKENS* self_follow;
-	eTOKENS judger;
 	nextToken = next_token();
-	judger = next_token()->kind;
-	back_token();
 	back_token();
 	switch (nextToken->kind) {
 		case TOKEN_INTEGER_TYPE:
+		case TOKEN_VOID_TYPE:
 		case TOKEN_FLOAT_TYPE: {
-			//special logic for nullable rule which has same values for First(FUNC_FULL_DEFS_TAG) and Follow(FUNC_FULL_DEFS_TAG):
-			if (judger == TOKEN_INTEGER_TYPE || judger == TOKEN_FLOAT_TYPE) {
-				fprintf(yyout, "Rule FUNC_FULL_DEFS_TAG -> FUNC_WITH_BODY\n");
-				parse_FUNC_FULL_DEFS();
-				break;
-			}
-			else if (judger == TOKEN_EOF) {
-				fprintf(yyout, "Rule FUNC_FULL_DEFS_TAG -> epsilon\n");
-				break;
-			}
-			// judger should be TOKEN EOF OR TOKEN_INTEGER_TYPE OR TOKEN_FLOAT_TYPE, continue to default 
+			fprintf(yyout, "Rule FUNC_FULL_DEFS_TAG -> FUNC_WITH_BODY\n");
+			parse_FUNC_FULL_DEFS();
+			break;
 		}
+		// nullable rule, add special case from Follow(FUNC_FULL_DEFS_TAG):
 		case TOKEN_EOF: {
 			fprintf(yyout, "Rule FUNC_FULL_DEFS_TAG -> epsilon\n");
 			break;
