@@ -399,6 +399,7 @@ static void parse_PARAM_TAG_TAG() {
 			break;
 		}
 		 // PARAM_TAG_TAG supports epsilon so adding cases for Follow(PARAM_TAG_TAG):
+		case TOKEN_COMMA:
 		case TOKEN_PARENTHESE_CLOSE: {
 			fprintf(yyout, "Rule PARAM_TAG_TAG -> epsilon\n");
 			break;
@@ -421,7 +422,7 @@ static void parse_PARAM_LIST_TAG() {
 			parse_PARAM_LIST_TAG();
 			break;
 		}
-		// PARAM_TAG_TAG supports epsilon so adding cases for Follow(PARAM_TAG_TAG):
+		// PARAM_LIST_TAG supports epsilon so adding cases for Follow(PARAM_LIST_TAG):
 		case TOKEN_PARENTHESE_CLOSE: {
 			fprintf(yyout, "Rule PARAM_LIST_TAG -> epsilon\n");
 			break;
@@ -711,6 +712,7 @@ static void parse_STMT_TAG() {
 	back_token();
 
 	switch (nextToken->kind) {
+		case TOKEN_AR_EQUAL:
 		case TOKEN_ID: {
 			fprintf(yyout, "Rule STMT_TAG ->    VAR# =EXPR \n");
 			parse_VAR_TAG();
@@ -805,6 +807,7 @@ static void parse_ARG_LIST_TAG() {
 		case TOKEN_COMMA: {
 			fprintf(yyout, "Rule ARG_LIST_TAG ->   , EXPR ARG_LIST_TAG\n");
 			match(TOKEN_COMMA);
+			parse_EXPR();
 			parse_ARG_LIST_TAG();
 			break;
 		}
