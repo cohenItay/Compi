@@ -537,7 +537,7 @@ static void parse_FUNC_FULL_DEFS_TAG() {
 			//special logic for nullable rule which has same values for First(FUNC_FULL_DEFS_TAG) and Follow(FUNC_FULL_DEFS_TAG):
 			if (judger == TOKEN_INTEGER_TYPE || judger == TOKEN_FLOAT_TYPE) {
 				fprintf(yyout, "Rule FUNC_FULL_DEFS_TAG -> FUNC_WITH_BODY\n");
-				parse_FUNC_WITH_BODY();
+				parse_FUNC_FULL_DEFS();
 				break;
 			}
 			else if (judger == TOKEN_EOF) {
