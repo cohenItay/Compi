@@ -509,10 +509,10 @@ char *yytext;
 	#pragma warning(disable : 4996)
 	#include "Token.h"
 	#include "parser.h"
-	#define SHOULD_PRINT_LEXICAL 0
 	#define TEMAMTES_INFO "205651078_304950702"
 	#define COPYRIGHTS "Created by Tom Naidich and Itay Cohen"
 	int line_num = 1;
+	int print_lex = 1;
 #line 516 "win.lex.yy.c"
 /* declare on comment related states */
 
@@ -2005,7 +2005,7 @@ int handle_token(eTOKENS token_kind)
 	create_and_store_token(token_kind, yytext, line_num);
 	
 	char* token_name = get_token_name(token_kind);
-	if (SHOULD_PRINT_LEXICAL)
+	if (print_lex)
 		fprintf(yyout, "Token of type '%s', lexeme: '%s', found in line: %d.\n", token_name, yytext, line_num);
 
 	return token_kind != TOKEN_EOF ? 1 : 0;
@@ -2013,14 +2013,14 @@ int handle_token(eTOKENS token_kind)
 
 int handle_invalid_token() 
 {
-	if (SHOULD_PRINT_LEXICAL)
+	if (print_lex)
 		fprintf(yyout, "- ERROR: The character '%s' at line: %d does not begin any legal token in the language.\n", yytext, line_num);
 	return 1;
 }
 
 int handle_unexpected_eof()
 {
-	if (SHOULD_PRINT_LEXICAL)
+	if (print_lex)
 		fprintf(yyout, "- ERROR: Reached EOF unexpectedly at line: %d.", line_num);
 	return 0;
 }
@@ -2030,57 +2030,95 @@ void main(int argc, char* argv[])
 	const char* path_input1 = "C:\\temp\\test1.txt";
 	const char* path_input2 = "C:\\temp\\test2.txt";
 	
+
+	/* ----------------- Lexical start ---------------------- */
 	const char* path_output1_lex = "C:\\temp\\test1_" TEMAMTES_INFO "_lex.txt";
-	const char* path_output2_lex = "C:\\temp\\test2" TEMAMTES_INFO "_lex.txt";
+	const char* path_output2_lex = "C:\\temp\\test2_" TEMAMTES_INFO "_lex.txt";
 
 	// HANDLE TestCase 1
-	// HANDLE LEX
 	yyin = fopen(path_input1, "r");
 	yyout = fopen(path_output1_lex, "w");
 	
 	if (yyin == NULL || yyout == NULL) {
 		const char* invalid_path = yyin == NULL ? path_input1 : path_output1_lex;
 		printf("\nERROR: Failed to open file at path %s. Aborting...", invalid_path);
-        return;
-    }
+    } else {
+		while (yylex() != 0);
+		fclose(yyin);
+		yyrestart(yyout);
+		fclose(yyout);
+		printf("INFO: Output for test file 1 lex has been generated successfully.\n");
+	}
+	// END OF TestCase 1
 	
-	parse();
-	fclose(yyin);
-	fclose(yyout);
+
+
 	
-	printf("\nINFO: Output for test file 1 has been generated successfully.");
-	// END OF Lex
+	// HANDLE TestCase 2
+	yyin = fopen(path_input2, "r");
+	yyout = fopen(path_output2_lex, "w");
+	yyrestart(yyin);
+	
+	if (yyin == NULL || yyout == NULL) {
+		const char* invalid_path = yyin == NULL ? path_input2 : path_output2_lex;
+        printf("ERROR: Failed to open file at path %s. Aborting...\n", invalid_path);
+    } else {
+		while(yylex() != 0);
+		fclose(yyin);
+		yyrestart(yyout);
+		fclose(yyout);
+		printf("INFO: Output for test file 2 lex has been generated successfully.\n\n");
+	}
+	// END OF TestCase 2
+	/* -------------------- Lexical end --------------------- */
+
+
+
+	print_lex = 0;
+
+
+	/* ----------------- Syntactic start ---------------------- */
+	const char* path_output1_syntactic = "C:\\temp\\test1_" TEMAMTES_INFO" _syntactic.txt";
+	const char* path_output2_syntactic = "C:\\temp\\test2_" TEMAMTES_INFO" _syntactic.txt";
+
+	// HANDLE TestCase 1
+	yyin = fopen(path_input1, "r");
+	yyout = fopen(path_output1_syntactic, "w");
+	yyrestart(yyin);
+	
+	if (yyin == NULL || yyout == NULL) {
+		const char* invalid_path = yyin == NULL ? path_input1 : path_output1_syntactic;
+		printf("\nERROR: Failed to open file at path %s. Aborting...", invalid_path);
+    } else {
+		parse();
+		fclose(yyin);
+		yyrestart(yyout);
+		fclose(yyout);
+		printf("INFO: Output for test file 1 syntactic has been generated successfully.\n");
+	}
 	// END OF TestCase 1
 	
 
 
 
-
-
-
 	// HANDLE TestCase 2
-	// HANDLE LEX
-	/* ---------------------------------------------------
 	yyin = fopen(path_input2, "r");
-	yyout = fopen(path_output2_lex, "w");
+	yyout = fopen(path_output2_syntactic, "w");
+	yyrestart(yyin);
 	
-	if (yyin == NULL || yyout == NULL)
-    	{
-		const char* invalid_path = yyin == NULL ? path_input2 : path_output2_lex;
+	if (yyin == NULL || yyout == NULL) {
+		const char* invalid_path = yyin == NULL ? path_input2 : path_output2_syntactic;
         printf("\nERROR: Failed to open file at path %s. Aborting...", invalid_path);
         return;
-    	}
-	
-	yyrestart(yyin);
-	while(yylex() != 0) {
-		next_token();
+    } else {
+		parse();
+		fclose(yyin);
+		yyrestart(yyout);
+		fclose(yyout);
+		printf("INFO: Output for test file 2 syntactic has been generated successfully.\n");
 	}
-	fclose(yyin);
-	fclose(yyout);
-	
-	printf("\nINFO: Output for test file 2 has been generated successfully.");
-	----------------------------------------------------- */
-	// END OF Lex
 	// END OF TestCase 2
+	/* -------------------- Syntactic end --------------------- */
+	
 }
 
