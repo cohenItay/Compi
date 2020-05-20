@@ -488,7 +488,6 @@ static void parse_FUNC_FULL_DEFS() {
 		case TOKEN_FLOAT_TYPE:
 		case TOKEN_VOID_TYPE: {
 			fprintf(yyout, "Rule FUNC_FULL_DEFS -> FUNC_WITH_BODY FUNC_FULL_DEFS_TAG\n");
-			match(TOKEN_CURLY_BRACE_OPEN);
 			parse_FUNC_WITH_BODY();
 			parse_FUNC_FULL_DEFS_TAG();
 			break;
