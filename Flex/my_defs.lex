@@ -115,31 +115,34 @@ void main(int argc, char* argv[])
 		printf("\nERROR: Failed to open file at path %s. Aborting...", invalid_path);
     } else {
 		while (yylex() != 0);
-		fclose(yyin);
+		yyrestart(yyin);
 		yyrestart(yyout);
+		fclose(yyin);
 		fclose(yyout);
 		printf("INFO: Output for test file 1 lex has been generated successfully.\n");
 	}
+	line_num = 1;
 	// END OF TestCase 1
 	
-
 
 	
 	// HANDLE TestCase 2
 	yyin = fopen(path_input2, "r");
 	yyout = fopen(path_output2_lex, "w");
-	yyrestart(yyin);
+	
 	
 	if (yyin == NULL || yyout == NULL) {
 		const char* invalid_path = yyin == NULL ? path_input2 : path_output2_lex;
         printf("ERROR: Failed to open file at path %s. Aborting...\n", invalid_path);
     } else {
+		yyrestart(yyin);
 		while(yylex() != 0);
-		fclose(yyin);
 		yyrestart(yyout);
+		fclose(yyin);
 		fclose(yyout);
 		printf("INFO: Output for test file 2 lex has been generated successfully.\n\n");
 	}
+	line_num = 1;
 	// END OF TestCase 2
 	/* -------------------- Lexical end --------------------- */
 
@@ -155,27 +158,27 @@ void main(int argc, char* argv[])
 	// HANDLE TestCase 1
 	yyin = fopen(path_input1, "r");
 	yyout = fopen(path_output1_syntactic, "w");
-	yyrestart(yyin);
 	
 	if (yyin == NULL || yyout == NULL) {
 		const char* invalid_path = yyin == NULL ? path_input1 : path_output1_syntactic;
 		printf("\nERROR: Failed to open file at path %s. Aborting...", invalid_path);
     } else {
 		parse();
-		fclose(yyin);
+		yyrestart(yyin);
 		yyrestart(yyout);
+		fclose(yyin);
 		fclose(yyout);
 		printf("INFO: Output for test file 1 syntactic has been generated successfully.\n");
 	}
+	line_num = 1;
 	// END OF TestCase 1
 	
 
-
+	
 
 	// HANDLE TestCase 2
 	yyin = fopen(path_input2, "r");
 	yyout = fopen(path_output2_syntactic, "w");
-	yyrestart(yyin);
 	
 	if (yyin == NULL || yyout == NULL) {
 		const char* invalid_path = yyin == NULL ? path_input2 : path_output2_syntactic;
@@ -183,11 +186,13 @@ void main(int argc, char* argv[])
         return;
     } else {
 		parse();
-		fclose(yyin);
+		yyrestart(yyin);
 		yyrestart(yyout);
+		fclose(yyin);
 		fclose(yyout);
 		printf("INFO: Output for test file 2 syntactic has been generated successfully.\n");
 	}
+	line_num = 1;
 	// END OF TestCase 2
 	/* -------------------- Syntactic end --------------------- */
 	

@@ -150,8 +150,10 @@ static void parse_VAR_DEC_TAG() {
 		}
 		case TOKEN_BRACKET_OPEN: {
 			fprintf(yyout, "Rule VAR_DEC_TAG -> [ DIM_SIZES ]\n");
+			match(TOKEN_BRACKET_OPEN);
 			parse_DIM_SIZES();
 			match(TOKEN_BRACKET_CLOSE);
+			match(TOKEN_SEMICOLON);
 			break;
 		}
 		default: {
@@ -543,6 +545,10 @@ static void parse_FUNC_FULL_DEFS_TAG() {
 				break;
 			}
 			// judger should be TOKEN EOF OR TOKEN_INTEGER_TYPE OR TOKEN_FLOAT_TYPE, continue to default 
+		}
+		case TOKEN_EOF: {
+			fprintf(yyout, "Rule FUNC_FULL_DEFS_TAG -> epsilon\n");
+			break;
 		}
 		default: {
 			match_multi(3, TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE, TOKEN_VOID_TYPE);
