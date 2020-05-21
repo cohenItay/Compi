@@ -580,6 +580,7 @@ static void parse_VAR_DEC_LIST() {
 		case TOKEN_INTEGER_TYPE:
 		case TOKEN_FLOAT_TYPE: {
 			fprintf(yyout, "Rule VAR_DEC_LIST -> VAR_DEC_LIST_TAG\n");
+			parse_VAR_DEC();
 			parse_VAR_DEC_LIST_TAG();
 			break;
 		}
