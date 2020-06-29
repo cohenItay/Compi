@@ -13,6 +13,7 @@ There are three functions providing an external access to the storage:
 
 int currentIndex = -1;
 Node* currentNode = NULL;
+Token** parserTknPP;
 
 #define TOKEN_ARRAY_SIZE 1000
 
@@ -34,7 +35,7 @@ void create_and_store_token(eTOKENS kind, char* lexeme, int numOfLine)
 			exit(0);
 		}
 		currentNode->tokensArray = 
-			(Token*) calloc(sizeof(Token),TOKEN_ARRAY_SIZE);
+			(Token*) calloc(TOKEN_ARRAY_SIZE, sizeof(Token));
 		if(currentNode->tokensArray == NULL)
 		{
 			fprintf(yyout,"\nUnable to allocate memory! \n"); 
@@ -52,7 +53,7 @@ void create_and_store_token(eTOKENS kind, char* lexeme, int numOfLine)
 		if (currentIndex == TOKEN_ARRAY_SIZE - 1)
 		{
 			currentIndex = 0;
-			currentNode->next = (Node*)calloc(sizeof(Node), 1);
+			currentNode->next = (Node*)calloc(1, sizeof(Node));
 
 			if(currentNode == NULL)
 			{
@@ -62,7 +63,7 @@ void create_and_store_token(eTOKENS kind, char* lexeme, int numOfLine)
 			currentNode->next->prev = currentNode;
 			currentNode = currentNode->next;
 			currentNode->tokensArray = 
-			 (Token*)calloc(sizeof(Token),TOKEN_ARRAY_SIZE);
+			 (Token*)calloc(TOKEN_ARRAY_SIZE, sizeof(Token));
 
 			if(currentNode->tokensArray == NULL)
 			{
@@ -198,15 +199,19 @@ static char* concat(const char* s1, const char* s2)
 	return result;
 }
 
+void setParserTokenPtr(Token** tkn) {
+	parserTknPP = tkn;
+}
+
 /*
-* matches the token.
+* calls next_token() once, and matches the token.
 */
 int match(eTOKENS t) {
 	return match_multi(1, t);
 }
 
 /*
-* calls next_token() once internally and
+* calls next_token() once, and
 * match to at least one of the eTOKENS sent.
 */
 int match_multi(int count, eTOKENS t, ...) {
@@ -217,6 +222,7 @@ int match_multi(int count, eTOKENS t, ...) {
 	char* requiredTokensNames;
 	int freeStr = 0;
 
+	*parserTknPP = tok;
 	if (tok != NULL) {
 		va_start(tkns_ap, count); // initialize the argument list
 		t = va_arg(tkns_ap, eTOKENS);

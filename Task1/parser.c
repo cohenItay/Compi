@@ -1,60 +1,69 @@
 
 #include "parser.h"
 #include "Token.h"
+#include "Table.h"
+#include "Dimension.h"
+#include "Parameters.h"
+#include "Attrs.h"
 
 static void error_recovery_multi(int count, eTOKENS* t_arr);
 static void error_recovery(eTOKENS t);
 static void parse_PROG();
 static void parse_GLOBAL_VARS();
-static void parse_VAR_DEC();
-static void parse_VAR_DEC_TAG();
-static void parse_TYPE();
-static void parse_DIM_SIZES();
-static void parse_DIM_SIZES_TAG();
+static AttrModel* parse_VAR_DEC();
+static Dimension* parse_VAR_DEC_TAG();
+static char* parse_TYPE();
+static void parse_DIM_SIZES(Dimension* dim);
+static void parse_DIM_SIZES_TAG(Dimension* dim);
 static void parse_GLOBAL_VARS_TAG();
 static void parse_FUNC_PREDEFS();
 static void parse_FUNC_FULL_DEFS();
-static void parse_FUNC_PROTOTYPE();
-static void parse_RETURNED_TYPE();
-static void parse_PARAMS();
-static void parse_PARAM();
-static void parse_PARAM_TAG();
-static void parse_PARAM_TAG_TAG();
-static void parse_PARAM_LIST();
-static void parse_PARAM_LIST_TAG();
+static AttrModel* parse_FUNC_PROTOTYPE();
+static char* parse_RETURNED_TYPE();
+static Parameters* parse_PARAMS();
+static Param* parse_PARAM();
+static void parse_PARAM_TAG(Param*);
+static void parse_PARAM_TAG_TAG(Param*);
+static void parse_PARAM_LIST(Parameters*);
+static void parse_PARAM_LIST_TAG(Parameters*);
 static void parse_FUNC_PREDEFS_TAG();
 static void parse_FUNC_WITH_BODY();
 static void parse_FUNC_FULL_DEFS_TAG();
-static void parse_COMP_STMT();
+static void parse_COMP_STMT(AttrModel*);
 static void parse_VAR_DEC_LIST();
 static void parse_VAR_DEC_LIST_TAG();
-static void parse_STMT_LIST();
-static void parse_STMT_LIST_TAG();
-static void parse_STMT();
-static void parse_STMT_TAG();
-static void parse_IF_STMT();
-static void parse_ARGS();
-static void parse_ARG_LIST();
-static void parse_ARG_LIST_TAG();
-static void parse_RETURN_STMT();
-static void parse_RETURN_STMT_TAG();
-static void parse_VAR_TAG();
-static void parse_EXPR_LIST();
+static void parse_STMT_LIST(AttrModel*);
+static void parse_STMT_LIST_TAG(AttrModel*);
+static void parse_STMT(AttrModel*);
+static void parse_STMT_TAG(AttrModel*);
+static void parse_IF_STMT(AttrModel*);
+static void parse_ARGS(AttrModel*);
+static void parse_ARG_LIST(AttrModel*);
+static void parse_ARG_LIST_TAG(AttrModel*, Parameters*, int);
+static void parse_RETURN_STMT(AttrModel*);
+static void parse_RETURN_STMT_TAG(AttrModel*);
+static AttrModel* parse_VAR_TAG();
+static void parse_EXPR_LIST(AttrModel*);
 static void parse_EXPR_LIST_TAG();
 static void parse_CONDITION();
-static void parse_EXPR();
+static AttrModel* parse_EXPR();
 static void parse_EXPR_TAG();
 static void parse_TERM();
 static void parse_TERM_TAG();
 static void parse_FACTOR();
 static void parse_FACTOR_TAG();
 
+static void validateFunctionsImplementations();
 
 Token* nextToken;
+Table* mTbl;
 
 void parse() {
+	setParserTokenPtr(&nextToken);
+	mTbl = tableCreate();
 	parse_PROG();
 	match(TOKEN_EOF);
+	tableDestroy(mTbl);
 }
 
 static void parse_PROG() {
@@ -96,17 +105,21 @@ static void parse_GLOBAL_VARS() {
 	}
 }
 
-static void parse_VAR_DEC() {
+static AttrModel* parse_VAR_DEC() {
+	AttrModel* attrModel = createAttributesModel();
 	eTOKENS* self_follow;
+	
 	nextToken = next_token();
 	back_token();
 	switch (nextToken->kind) {
 		case TOKEN_INTEGER_TYPE:
 		case TOKEN_FLOAT_TYPE: {
 			fprintf(yyout, "Rule VAR_DEC -> TYPE id VAR_DEC_TAG\n");
-			parse_TYPE();
+			attrModel->type = "";
+			attrModel->type = parse_TYPE();
 			match(TOKEN_ID);
-			parse_VAR_DEC_TAG();
+			attrModel->list = parse_VAR_DEC_TAG();
+			attrModel->role = ATTR_ROLE_VAR;
 			break;
 		}
 		default: {
@@ -117,29 +130,36 @@ static void parse_VAR_DEC() {
 	}
 }
 
-static void parse_TYPE() {
+static char* parse_TYPE() {
+	char* attrType = NULL;
 	nextToken = next_token();
 	back_token();
 	switch (nextToken->kind) {
 		case TOKEN_INTEGER_TYPE: {
+			attrType = ATTR_TYPE_INT;
 			fprintf(yyout, "Rule TYPE -> int\n");
 			match(TOKEN_INTEGER_TYPE);
 			break;
 		}
 		case TOKEN_FLOAT_TYPE: {
+			attrType = ATTR_TYPE_FLOAT;
 			fprintf(yyout, "Rule TYPE -> float\n");
 			match(TOKEN_FLOAT_TYPE);
 			break;
+
 		}
 		default: {
 			match_multi(2, TOKEN_INTEGER_TYPE, TOKEN_FLOAT_TYPE);
 			error_recovery(TOKEN_ID);
 		}
 	}
+	return attrType;
 }
 
-static void parse_VAR_DEC_TAG() {
+static Dimension* parse_VAR_DEC_TAG() {
+	Dimension* dimen = createDimension();
 	eTOKENS* self_follow;
+
 	nextToken = next_token();
 	back_token();
 	switch (nextToken->kind) {
@@ -151,7 +171,7 @@ static void parse_VAR_DEC_TAG() {
 		case TOKEN_BRACKET_OPEN: {
 			fprintf(yyout, "Rule VAR_DEC_TAG -> [ DIM_SIZES ]\n");
 			match(TOKEN_BRACKET_OPEN);
-			parse_DIM_SIZES();
+			parse_DIM_SIZES(dimen);
 			match(TOKEN_BRACKET_CLOSE);
 			match(TOKEN_SEMICOLON);
 			break;
@@ -162,16 +182,18 @@ static void parse_VAR_DEC_TAG() {
 			error_recovery_multi(7, self_follow);
 		}
 	}
+	return dimen;
 }
 
-static void parse_DIM_SIZES() {
+static void parse_DIM_SIZES(Dimension* dim) {
 	nextToken = next_token();
 	back_token();
 	switch (nextToken->kind) {
 		case TOKEN_INTEGER: {
 			fprintf(yyout, "Rule DIM_SIZES -> int_num DIM_SIZES_TAG\n");
 			match(TOKEN_INTEGER);
-			parse_DIM_SIZES_TAG();
+			addToDimension(dim, nextToken->lexeme);
+			parse_DIM_SIZES_TAG(dim);
 			break;
 		}
 		default: {
@@ -181,14 +203,14 @@ static void parse_DIM_SIZES() {
 	}
 }
 
-static void parse_DIM_SIZES_TAG() {
+static void parse_DIM_SIZES_TAG(Dimension* dim) {
 	nextToken = next_token();
 	back_token();
 	switch (nextToken->kind) {
 		case TOKEN_COMMA: {
 			fprintf(yyout, "Rule DIM_SIZES_TAG -> , DIM_SIZES\n");
 			match(TOKEN_COMMA);
-			parse_DIM_SIZES();
+			parse_DIM_SIZES(dim);
 			break;
 		}
 		// DIM_SIZES_TAG supports epsilon so adding cases for Follow(DIM_SIZES_TAG):
@@ -246,6 +268,7 @@ static void parse_GLOBAL_VARS_TAG() {
 }
 
 static void parse_FUNC_PREDEFS() {
+	AttrModel* attrModel;
 	eTOKENS* self_follow;
 	nextToken = next_token();
 	back_token();
@@ -254,7 +277,9 @@ static void parse_FUNC_PREDEFS() {
 		case TOKEN_FLOAT_TYPE:
 		case TOKEN_VOID_TYPE: {
 			fprintf(yyout, "Rule FUNC_PREDEFS -> FUNC_PROTOTYPE; FUNC_PREDEFS_TAG\n");
-			parse_FUNC_PROTOTYPE();
+			attrModel = parse_FUNC_PROTOTYPE();
+			attrModel->role = ATTR_ROLE_PRE_FUNC;
+			tableInsert(mTbl, attrModel->name, attrModel);
 			match(TOKEN_SEMICOLON);
 			parse_FUNC_PREDEFS_TAG();
 			break;
@@ -265,11 +290,12 @@ static void parse_FUNC_PREDEFS() {
 			error_recovery_multi(3, self_follow);
 		}
 	}
-
 }
 
-static void parse_FUNC_PROTOTYPE() {
+static AttrModel* parse_FUNC_PROTOTYPE() {
+	AttrModel* attrModel = createAttributesModel();
 	eTOKENS* self_follow;
+	
 	nextToken = next_token();
 	back_token();
 	switch (nextToken->kind) {
@@ -277,10 +303,11 @@ static void parse_FUNC_PROTOTYPE() {
 		case TOKEN_FLOAT_TYPE:
 		case TOKEN_VOID_TYPE: {
 			fprintf(yyout, "Rule FUNC_PROTOTYPE->RETURNED_TYPE id(PARAMS)\n");
-			parse_RETURNED_TYPE();
+			attrModel->type = parse_RETURNED_TYPE();
 			match(TOKEN_ID);
+			attrModel->name = nextToken->lexeme;
 			match(TOKEN_PARENTHESE_OPEN);
-			parse_PARAMS();
+			attrModel->list = parse_PARAMS();
 			match(TOKEN_PARENTHESE_CLOSE);
 			break;
 		}
@@ -290,21 +317,24 @@ static void parse_FUNC_PROTOTYPE() {
 			error_recovery_multi(2, self_follow);
 		}
 	}
+	return attrModel;
 }
 
-static void parse_RETURNED_TYPE() {
+static char* parse_RETURNED_TYPE() {
+	const char* type = NULL;
 	nextToken = next_token();
 	back_token();
 	switch (nextToken->kind) {
 		case TOKEN_INTEGER_TYPE:
 		case TOKEN_FLOAT_TYPE: {
 			fprintf(yyout, "Rule RETURNED_TYPE -> TYPE\n");
-			parse_TYPE();
+			type = parse_TYPE();
 			break;
 		}
 		case TOKEN_VOID_TYPE: {
 			fprintf(yyout, "Rule RETURNED_TYPE -> void\n");
 			match(TOKEN_VOID_TYPE);
+			type = ATTR_TYPE_VOID;
 			break;
 		}
 		default: {
@@ -312,16 +342,19 @@ static void parse_RETURNED_TYPE() {
 			error_recovery(TOKEN_ID);
 		}
 	}
+	return type;
 }
 
-static void parse_PARAMS() {
+static Parameters* parse_PARAMS() {
+	Parameters* params = NULL;
 	nextToken = next_token();
 	back_token();
 	switch (nextToken->kind) {
 		case TOKEN_INTEGER_TYPE:
 		case TOKEN_FLOAT_TYPE: {
 			fprintf(yyout, "Rule PARAMS -> PARAM_LIST\n");
-			parse_PARAM_LIST();
+			params = createParameters();
+			parse_PARAM_LIST(params);
 			break;
 		}
 		// PARAMS supports epsilon so adding cases for Follow(PARAMS):
@@ -334,17 +367,18 @@ static void parse_PARAMS() {
 			error_recovery(TOKEN_PARENTHESE_CLOSE);
 		}
 	}
+	return params;
 }
 
-static void parse_PARAM_LIST() {
+static void parse_PARAM_LIST(Parameters* params) {
 	nextToken = next_token();
 	back_token();
 	switch (nextToken->kind) {
 		case TOKEN_INTEGER_TYPE:
 		case TOKEN_FLOAT_TYPE: {
 			fprintf(yyout, "Rule PARAM_LIST -> PARAM PARAM_LIST_TAG\n");
-			parse_PARAM();
-			parse_PARAM_LIST_TAG();
+			addToParameters(params, parse_PARAM());
+			parse_PARAM_LIST_TAG(params);
 			break;
 		}
 		default: {
@@ -354,15 +388,17 @@ static void parse_PARAM_LIST() {
 	}
 }
 
-static void parse_PARAM() {
+static Param* parse_PARAM() {
+	Param* param = NULL;
 	nextToken = next_token();
 	back_token();
 	switch (nextToken->kind) {
 		case TOKEN_INTEGER_TYPE:
 		case TOKEN_FLOAT_TYPE: {
 			fprintf(yyout, "Rule PARAM -> TYPE PARAM_TAG\n");
-			parse_TYPE();
-			parse_PARAM_TAG();
+			param = createParam();
+			param->type = parse_TYPE();
+			parse_PARAM_TAG(param);
 			break;
 		}
 		default: {
@@ -370,16 +406,18 @@ static void parse_PARAM() {
 			error_recovery(TOKEN_PARENTHESE_CLOSE);
 		}
 	}
+	return param;
 }
 
-static void parse_PARAM_TAG() {
+static void parse_PARAM_TAG(Param* param) {
 	nextToken = next_token();
 	back_token();
 	switch (nextToken->kind) {
 		case TOKEN_ID: {
 			fprintf(yyout, "Rule PARAM_TAG -> id PARAM_TAG_TAG\n");
+			param->name = nextToken->lexeme;
 			match(TOKEN_ID);
-			parse_PARAM_TAG_TAG();
+			parse_PARAM_TAG_TAG(param);
 			break;
 		}
 		default: {
@@ -389,14 +427,17 @@ static void parse_PARAM_TAG() {
 	}
 }
 
-static void parse_PARAM_TAG_TAG() {
+static void parse_PARAM_TAG_TAG(Param* param) {
+	Dimension* dimen;
 	nextToken = next_token();
 	back_token();
 	switch (nextToken->kind) {
 		case TOKEN_BRACKET_OPEN: {
 			fprintf(yyout, "Rule PARAM_TAG_TAG -> [ DIM_SIZES ]\n");
 			match(TOKEN_BRACKET_OPEN);
-			parse_DIM_SIZES();
+			dimen = createDimension();
+			param->dimen = dimen;
+			parse_DIM_SIZES(param->dimen);
 			match(TOKEN_BRACKET_CLOSE);
 			break;
 		}
@@ -413,15 +454,17 @@ static void parse_PARAM_TAG_TAG() {
 	}
 }
 
-static void parse_PARAM_LIST_TAG() {
+static void parse_PARAM_LIST_TAG(Parameters* params) {
 	nextToken = next_token();
 	back_token();
 	switch (nextToken->kind) {
 		case TOKEN_COMMA: {
 			fprintf(yyout, "Rule PARAM_LIST_TAG -> , PARAM PARAM_LIST_TAG\n");
 			match(TOKEN_COMMA);
-			parse_PARAM();
-			parse_PARAM_LIST_TAG();
+			if (!addToParameters(params, parse_PARAM())) {
+				fprintf(yyout, "CONTEXT EXCEPTION: duplicate parameters. line %d\n", nextToken->lineNumber);
+			}
+			parse_PARAM_LIST_TAG(params);
 			break;
 		}
 		// PARAM_LIST_TAG supports epsilon so adding cases for Follow(PARAM_LIST_TAG):
@@ -442,6 +485,7 @@ static void parse_FUNC_PREDEFS_TAG() {
 	// SOLVED BY: loops next_token() until find '{' OR ';' OR 'EOF', if its '{'  - i'll use epsilon. if its ';' i'll continue to parse.
 
 	eTOKENS* self_follow;
+	AttrModel* attrModel, * temp;
 	int stepsTaken = 0;
 	eTOKENS judger = TOKEN_NULL;
 	while (judger != TOKEN_CURLY_BRACE_OPEN && judger != TOKEN_SEMICOLON && judger != TOKEN_EOF) {
@@ -461,7 +505,16 @@ static void parse_FUNC_PREDEFS_TAG() {
 		case TOKEN_VOID_TYPE: {
 			if (judger == TOKEN_SEMICOLON) {
 				fprintf(yyout, "Rule  FUNC_PREDEFS_TAG -> FUNC_PROTOTYPE; FUNC_PREDEFS_TAG\n");
-				parse_FUNC_PROTOTYPE();
+				attrModel = parse_FUNC_PROTOTYPE();
+				temp = tableSearch(mTbl, attrModel->name);
+				attrModel->role = ATTR_ROLE_PRE_FUNC;
+				if (temp != NULL &&
+					!strcmp(temp->role, ATTR_ROLE_PRE_FUNC) &&
+					((Parameters*)temp->list)->amount == ((Parameters*)attrModel->list)->amount)
+				{
+					fprintf(yyout, "CONTEXT ERROR: Function of the same name has already been define in this scope. line %d\n", nextToken->lineNumber);
+				}
+				tableInsert(mTbl, attrModel->name, attrModel);
 				match(TOKEN_SEMICOLON);
 				parse_FUNC_PREDEFS_TAG();
 				break;
@@ -505,15 +558,46 @@ static void parse_FUNC_FULL_DEFS() {
 
 static void parse_FUNC_WITH_BODY() {
 	eTOKENS* self_follow;
+	AttrModel *attrParseModel, *attrTableModel;
 	nextToken = next_token();
+
 	back_token();
 	switch (nextToken->kind) {
 		case TOKEN_INTEGER_TYPE:
 		case TOKEN_FLOAT_TYPE:
 		case TOKEN_VOID_TYPE: {
 			fprintf(yyout, "Rule FUNC_WITH_BODY  -> FUNC_PROTOTYPE COMP_STMT\n");
-			parse_FUNC_PROTOTYPE();
-			parse_COMP_STMT();
+			attrParseModel = parse_FUNC_PROTOTYPE();
+			if (strcmp(attrParseModel->name, "main")) {
+				// its not the main function
+
+				attrTableModel = tableSearch(mTbl, attrParseModel->name);
+				if (attrTableModel == NULL) {
+					fprintf(yyout, "CONTEXT ERROR: no decleration for function %s. line %d\n", attrParseModel->name, nextToken->lineNumber);
+				}
+				else {
+					if (strcmp(attrTableModel->role, ATTR_ROLE_PRE_FUNC)) {
+						// not equals.
+						fprintf(yyout, "CONTEXT ERROR: no decleration for function %s. line %d\n", attrParseModel->name, nextToken->lineNumber);
+					}
+					if (strcmp(attrTableModel->type, attrParseModel->type)) {
+						fprintf(yyout, "CONTEXT ERROR: function %s implementation return type differs from decleration. line %d\n", attrParseModel->name, nextToken->lineNumber);
+					}
+					if (!parametersEqual(attrTableModel->list, attrParseModel->list)) {
+						fprintf(yyout, "CONTEXT ERROR: function %s implementation parameters differ from what is declared. line %d\n", attrParseModel->name, nextToken->lineNumber);
+					}
+					if (!strcmp(attrTableModel->role, ATTR_ROLE_PRE_FUNC) &&
+						!strcmp(attrTableModel->type, attrParseModel->type) &&
+						parametersEqual(attrTableModel->list, attrParseModel->list)) {
+						attrParseModel->role = ATTR_ROLE_FULL_FUNC;
+						tableInsert(mTbl, attrParseModel->name, attrParseModel);
+					}
+				}
+			}
+			mTbl = createChildTable(mTbl);
+			populateTableWithParameters(mTbl, ((Parameters*)attrParseModel->list));
+			parse_COMP_STMT(attrParseModel);
+			mTbl = tableDestroy(mTbl); // returns the parent table after destruction
 			break;
 		}
 		default: {
@@ -539,6 +623,7 @@ static void parse_FUNC_FULL_DEFS_TAG() {
 		// nullable rule, add special case from Follow(FUNC_FULL_DEFS_TAG):
 		case TOKEN_EOF: {
 			fprintf(yyout, "Rule FUNC_FULL_DEFS_TAG -> epsilon\n");
+			validateFunctionsImplementations();
 			break;
 		}
 		default: {
@@ -549,18 +634,37 @@ static void parse_FUNC_FULL_DEFS_TAG() {
 	}
 }
 
+/* validates that all of the pre defined function are implemented. if not prints error*/
+static void validateFunctionsImplementations() {
+	int i;
+	TableRow *row;
+	Table *predefsTbl;
 
-static void parse_COMP_STMT() {
+	predefsTbl = filterByRole(mTbl, ATTR_ROLE_PRE_FUNC);
+	if (predefsTbl->n == 0) {
+		return;
+	} else {
+		// missing function implementation
+		row = predefsTbl->firstRow;
+
+		for (i = 0; i < predefsTbl->n; i++) {
+			fprintf(yyout, "CONTEXT ERROR: no implementation for function %s. line %d\n", row->key, nextToken->lineNumber);
+			row = row->next;
+		}
+	}
+}
+
+/* inheritedAttrs reflect the the function prototype which this body belongs to*/
+void parse_COMP_STMT(AttrModel* inheritedAttrs) {
 	eTOKENS* self_follow;
 	nextToken = next_token();
 	back_token();
-
 	switch (nextToken->kind) {
 		case TOKEN_CURLY_BRACE_OPEN: {
 			fprintf(yyout, "Rule COMP_STMT -> { VAR_DEC_LIST STMT_LIST }\n");
 			match(TOKEN_CURLY_BRACE_OPEN);
 			parse_VAR_DEC_LIST();
-			parse_STMT_LIST();
+			parse_STMT_LIST(inheritedAttrs);
 			match(TOKEN_CURLY_BRACE_CLOSE);
 			break;
 		}
@@ -571,6 +675,7 @@ static void parse_COMP_STMT() {
 		}
 	}
 }
+
 static void parse_VAR_DEC_LIST() {
 	eTOKENS* self_follow;
 	nextToken = next_token();
@@ -627,7 +732,9 @@ static void parse_VAR_DEC_LIST_TAG() {
 		}
 	}
 }
-static void parse_STMT_LIST() {
+
+/* inheritedAttrs reflect the the function prototype which this body belongs to*/
+static void parse_STMT_LIST(AttrModel* inheritedAttr) {
 	nextToken = next_token();
 	back_token();
 
@@ -637,8 +744,8 @@ static void parse_STMT_LIST() {
 		case TOKEN_IF:
 		case TOKEN_RETURN: {
 			fprintf(yyout, "Rule STMT_LIST ->  STMT STMT_LIST_TAG\n");
-			parse_STMT();
-			parse_STMT_LIST_TAG();
+			parse_STMT(inheritedAttr);
+			parse_STMT_LIST_TAG(inheritedAttr);
 			break;
 		}
 		default: {
@@ -647,7 +754,9 @@ static void parse_STMT_LIST() {
 		}
 	}
 }
-static void parse_STMT_LIST_TAG() {
+
+/* inheritedAttrs reflect the the function prototype which this body belongs to*/
+static void parse_STMT_LIST_TAG(AttrModel* inhertiedModel) {
 	nextToken = next_token();
 	back_token();
 
@@ -655,8 +764,8 @@ static void parse_STMT_LIST_TAG() {
 		case TOKEN_SEMICOLON: {
 			fprintf(yyout, "Rule STMT_LIST_TAG -> ; STMT STMT_LIST_TAG\n");
 			match(TOKEN_SEMICOLON);
-			parse_STMT();
-			parse_STMT_LIST_TAG();
+			parse_STMT(inhertiedModel);
+			parse_STMT_LIST_TAG(inhertiedModel);
 			break;
 		}
 		// rule supports epsilon so adding cases for Follow(STMT_LIST_TAG):
@@ -670,7 +779,9 @@ static void parse_STMT_LIST_TAG() {
 		}
 	}
 }
-static void parse_STMT() {
+
+/* inheritedAttrs reflect the the function prototype which this body belongs to*/
+static void parse_STMT(AttrModel* inheritedAttr) {
 	eTOKENS* self_follow;
 	nextToken = next_token();
 	back_token();
@@ -679,22 +790,24 @@ static void parse_STMT() {
 		case TOKEN_ID: {
 			fprintf(yyout, "Rule STMT ->  id STMT_TAG\n");
 			match(TOKEN_ID);
-			parse_STMT_TAG();
+			parse_STMT_TAG(inheritedAttr);
 			break;
 		}
 		case TOKEN_CURLY_BRACE_OPEN: {
 			fprintf(yyout, "Rule STMT ->  COMP_STMT\n");
-			parse_COMP_STMT();
+			mTbl = createChildTable(mTbl);
+			parse_COMP_STMT(inheritedAttr);
+			mTbl = tableDestroy(mTbl); // returns the parent table
 			break;
 		}
 		case TOKEN_IF: {
 			fprintf(yyout, "Rule STMT ->  IF_STMT\n");
-			parse_IF_STMT();
+			parse_IF_STMT(inheritedAttr);
 			break;
 		}
 		case TOKEN_RETURN: {
 			fprintf(yyout, "Rule STMT ->  RETURN_STMT\n");
-			parse_RETURN_STMT();
+			parse_RETURN_STMT(inheritedAttr);
 			break;
 		}
 		default: {
@@ -704,24 +817,44 @@ static void parse_STMT() {
 		}
 	}
 }
-static void parse_STMT_TAG() {
+
+/* inheritedAttrs reflect the the function prototype which this body belongs to*/
+static void parse_STMT_TAG(AttrModel* inheritedAttrs) {
 	eTOKENS* self_follow;
+	AttrModel* funAttrs;
 	nextToken = next_token();
 	back_token();
+	AttrModel *varAttrs, *exprAttrs;
 
 	switch (nextToken->kind) {
 		case TOKEN_AR_EQUAL:
 		case TOKEN_ID: {
-			fprintf(yyout, "Rule STMT_TAG ->    VAR# =EXPR \n");
-			parse_VAR_TAG();
+			fprintf(yyout, "Rule STMT_TAG ->    VAR# = EXPR \n");
+			varAttrs = parse_VAR_TAG();
 			match(TOKEN_AR_EQUAL);
-			parse_EXPR();
+			exprAttrs = parse_EXPR();
+			if (strcmp(varAttrs->type, ATTR_TYPE_INT) && strcmp(exprAttrs->type, ATTR_TYPE_INT)) {
+				fprinf("CONTEXT ERROR: Illegal assignment. line %d\n", nextToken->lineNumber);
+			}
+			if (strcmp(varAttrs->type, ATTR_TYPE_FLOAT) &&
+				(strcmp(exprAttrs->type, ATTR_TYPE_INT) || strcmp(exprAttrs->type, ATTR_TYPE_FLOAT))) {
+				fprinf("CONTEXT ERROR: Illegal assignment. line %d\n", nextToken->lineNumber);
+			}
 			break;
 		}
 		case TOKEN_PARENTHESE_OPEN: {
 			fprintf(yyout, "Rule STMT_TAG ->   ( ARGS )\n");
+			nextToken = back_token(); // for retreiving the desired function name 
+			funAttrs = tableSearch(mTbl, nextToken->lexeme);
+			if (funAttrs != NULL &&
+				strcmp(funAttrs->role, ATTR_ROLE_PRE_FUNC) || strcmp(funAttrs->role, ATTR_ROLE_FULL_FUNC)) 
+			{
+				fprinf(yyout, "%s is not a function. line %d\n", nextToken->lineNumber, nextToken->lineNumber);
+				inheritedAttrs->type = ATTR_TYPE_ERR;
+			}
+			nextToken = next_token(); // restore token location
 			match(TOKEN_PARENTHESE_OPEN);
-			parse_ARGS();
+			parse_ARGS(funAttrs);
 			match(TOKEN_PARENTHESE_CLOSE);
 			break;
 		}
@@ -732,7 +865,9 @@ static void parse_STMT_TAG() {
 		}
 	}
 }
-static void parse_IF_STMT() {
+
+/* inheritedAttrs reflect the the function prototype which this body belongs to*/
+static void parse_IF_STMT(AttrModel* inheritedAttrs) {
 	eTOKENS* self_follow;
 	nextToken = next_token();
 	back_token();
@@ -744,7 +879,7 @@ static void parse_IF_STMT() {
 			match(TOKEN_PARENTHESE_OPEN);
 			parse_CONDITION();
 			match(TOKEN_PARENTHESE_CLOSE);
-			parse_STMT();
+			parse_STMT(inheritedAttrs);
 			break;
 		}
 		default: {
@@ -755,7 +890,7 @@ static void parse_IF_STMT() {
 	}
 }
 
-static void parse_ARGS() {
+static void parse_ARGS(AttrModel* inheritedAttrs) {
 	nextToken = next_token();
 	back_token();
 
@@ -765,7 +900,7 @@ static void parse_ARGS() {
 		case TOKEN_FLOAT:
 		case TOKEN_PARENTHESE_OPEN: {
 			fprintf(yyout, "Rule _ARGS ->  ARG_LIST \n");
-			parse_ARG_LIST();
+			parse_ARG_LIST(inheritedAttrs);
 			break;
 		}
 		// rule supports epsilon so adding cases for Follow(X):
@@ -779,7 +914,10 @@ static void parse_ARGS() {
 		}
 	}
 }
-static void parse_ARG_LIST() {
+
+static void parse_ARG_LIST(AttrModel* inheritedAttrs) {
+	Parameters* params;
+	AttrModel* exprAttrs;
 	nextToken = next_token();
 	back_token();
 	switch (nextToken->kind) {
@@ -788,8 +926,13 @@ static void parse_ARG_LIST() {
 		case TOKEN_FLOAT:
 		case TOKEN_PARENTHESE_OPEN: {
 			fprintf(yyout, "Rule ARG_LIST ->  EXPR ARG_LIST_TAG\n");
-			parse_EXPR();
-			parse_ARG_LIST_TAG();
+			exprAttrs = parse_EXPR();
+			params = (Parameters*)inheritedAttrs->list;
+			if (params->amount > 0 &&
+				strcmp(exprAttrs->type, params->params_array[0]->type)) {
+				fprintf("CONTEXT ERROR: type mismatch for first argument for function, line %d\n", nextToken->lineNumber);
+			}
+			parse_ARG_LIST_TAG(inheritedAttrs, params, 1);
 			break;
 		}
 		default: {
@@ -798,20 +941,34 @@ static void parse_ARG_LIST() {
 		}
 	}
 }
-static void parse_ARG_LIST_TAG() {
+static void parse_ARG_LIST_TAG(AttrModel* inheritedAttrs, Parameters* params, int checkedParamIndex) {
+	AttrModel* exprAttrs;
+	Param* checkedParam = params->amount > checkedParamIndex ? params->params_array[checkedParamIndex] : NULL;
 	nextToken = next_token();
-	back_token();
+	back_token(); 
 	switch (nextToken->kind) {
 		case TOKEN_COMMA: {
 			fprintf(yyout, "Rule ARG_LIST_TAG ->   , EXPR ARG_LIST_TAG\n");
+			if (checkedParam == NULL) {
+				fprintf(yyout, "CONTEXT EXCEPTION: Illegal amount of parameters. line %d\n", nextToken->lineNumber);
+				inheritedAttrs->type = ATTR_TYPE_ERR;
+			}
 			match(TOKEN_COMMA);
-			parse_EXPR();
-			parse_ARG_LIST_TAG();
+			exprAttrs = parse_EXPR();
+			if (strcmp(exprAttrs->type, checkedParam->type)) {
+				fprinf(yyout, "CONTEXT EXCEPTION: mismatch parameter type at line %d\n", nextToken->lineNumber);
+				inheritedAttrs->type = ATTR_TYPE_ERR;
+			}
+			parse_ARG_LIST_TAG(inheritedAttrs, params, checkedParamIndex+1);
 			break;
 		}
 		// rule supports epsilon so adding cases for Follow(ARG_LIST_TAG):
 		case TOKEN_PARENTHESE_CLOSE: {
 			fprintf(yyout, "Rule ARG_LIST_TAG -> epsilon\n");
+			if (checkedParam != NULL) {
+				fprintf(yyout, "CONTEXT EXCEPTION: Illegal amount of parameters. line %d\n", nextToken->lineNumber);
+				inheritedAttrs->type == ATTR_TYPE_ERR;
+			}
 			break;
 		}
 		default: {
@@ -820,7 +977,7 @@ static void parse_ARG_LIST_TAG() {
 		}
 	}
 }
-static void parse_RETURN_STMT() {
+static void parse_RETURN_STMT(AttrModel* inheritedAttrs) {
 	eTOKENS* self_follow;
 	nextToken = next_token();
 	back_token();
@@ -829,7 +986,7 @@ static void parse_RETURN_STMT() {
 		case TOKEN_RETURN: {
 			fprintf(yyout, "Rule RETURN_STMT ->   return RETURN_STMT_TAG\n");
 			match(TOKEN_RETURN);
-			parse_RETURN_STMT_TAG();
+			parse_RETURN_STMT_TAG(inheritedAttrs);
 			break;
 		}
 		default: {
@@ -839,8 +996,9 @@ static void parse_RETURN_STMT() {
 		}
 	}
 }
-static void parse_RETURN_STMT_TAG() {
+static void parse_RETURN_STMT_TAG(AttrModel* inheritedAttrs) {
 	eTOKENS* self_follow;
+	AttrModel* exprAttrs;
 	nextToken = next_token();
 	back_token();
 
@@ -850,13 +1008,19 @@ static void parse_RETURN_STMT_TAG() {
 		case TOKEN_FLOAT:
 		case TOKEN_PARENTHESE_OPEN: {
 			fprintf(yyout, "Rule RETURN_STMT_TAG ->  EXPR \n");
-			parse_EXPR();
+			exprAttrs = parse_EXPR();
+			if (strcmp(exprAttrs->type, inheritedAttrs->type)) {
+				fprinf(yyout, "CONTEXT ERROR: Excpected return type of %s but %s found. line %d\n", inheritedAttrs->type, exprAttrs->type, nextToken->lineNumber);
+			}
 			break;
 		}
 		// rule supports epsilon so adding cases for Follow(RETURN_STMT_TAG):
 		case TOKEN_SEMICOLON:
 		case TOKEN_CURLY_BRACE_CLOSE: {
 			fprintf(yyout, "Rule RETURN_STMT_TAG -> epsilon\n");
+			if (strcmp(ATTR_TYPE_VOID, inheritedAttrs->type)) {
+				fprinf(yyout, "CONTEXT ERROR: Excpected return type of void but %s found. line %d\n", exprAttrs->type, nextToken->lineNumber);
+			}
 			break;
 		}
 		default: {
@@ -867,7 +1031,7 @@ static void parse_RETURN_STMT_TAG() {
 	}
 }
 
-static void parse_VAR_TAG() {
+static AttrModel* parse_VAR_TAG() {
 	eTOKENS* self_follow;
 	nextToken = next_token();
 	back_token();
@@ -876,7 +1040,12 @@ static void parse_VAR_TAG() {
 		case TOKEN_BRACKET_OPEN: {
 			fprintf(yyout, "Rule VAR_TAG -> [ EXPR_LIST ]\n");
 			match(TOKEN_BRACKET_OPEN);
-			parse_EXPR_LIST();
+			if (attrModel->list == NULL || ((Dimension*)attrModel->list)->amount < 1) {
+				fprinf(yyout, "variable %s should be an array or multi dimensional. line %d\n", attrModel->name, nextToken->lineNumber);
+				attrModel->type = ATTR_TYPE_ERR;
+			}
+			parse_EXPR_LIST(attrModel);
+
 			match(TOKEN_BRACKET_CLOSE);
 			break;
 		}
@@ -896,6 +1065,10 @@ static void parse_VAR_TAG() {
 		case TOKEN_PARENTHESE_CLOSE:
 		case TOKEN_AR_EQUAL: {
 			fprintf(yyout, "Rule VAR_TAG -> epsilon\n");
+			if (attrModel->list != NULL && ((Dimension*)attrModel->list)->amount > 0) {
+				fprinf(yyout, "CONEXT ERROR: variable %s cannot be an array or have a dimension\n", attrModel->name);
+				attrModel->type = ATTR_TYPE_ERR;
+			}
 			break;
 		}
 		default: {
@@ -906,9 +1079,10 @@ static void parse_VAR_TAG() {
 		}
 	}
 }
-static void parse_EXPR_LIST() {
+static void parse_EXPR_LIST(AttrModel* attrModel) {
 	nextToken = next_token();
 	back_token();
+	AttrModel* resultAttrs = createAttributesModel();
 
 	switch (nextToken->kind) {
 		case TOKEN_ID:
@@ -916,7 +1090,15 @@ static void parse_EXPR_LIST() {
 		case TOKEN_FLOAT:
 		case TOKEN_PARENTHESE_OPEN: {
 			fprintf(yyout, "Rule EXPR_LIST ->  EXPR EXPR_LIST_TAG\n");
-			parse_EXPR();
+			parse_EXPR(resultAttrs);
+			if (strcmp(resultAttrs->type, ATTR_TYPE_INT)) {
+				fprinf(yyout, "CONTEXT EXCEPTION: the expression must return an integer. line %d\n", nextToken->lineNumber);
+				attrModel->type = ATTR_TYPE_ERR;
+			} else if (((Dimension*)attrModel->list)->amount >= ((Dimension*)resultAttrs->list)->amount) {
+				fprinf(yyout, "CONTEXT ERROR: the expression exceeded the array size. line %d\n", nextToken->lineNumber);
+				
+
+			}
 			parse_EXPR_LIST_TAG();
 			break;
 		}
@@ -972,7 +1154,7 @@ static void parse_CONDITION() {
 	}
 }
 
-static void parse_EXPR() {
+static AttrModel* parse_EXPR() {
 	eTOKENS* self_follow;
 	nextToken = next_token();
 	back_token();
