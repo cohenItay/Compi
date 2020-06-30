@@ -13,7 +13,7 @@ typedef struct attributes {
     char* name;
     char* role;
     char* type;
-    char* arrType;
+    char* value;
     void* list;
 } AttrModel;
 

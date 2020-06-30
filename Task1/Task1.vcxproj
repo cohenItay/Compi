@@ -138,11 +138,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Attrs.c" />
+    <ClCompile Include="Attrs.h" />
+    <ClCompile Include="Dimension.c" />
+    <ClCompile Include="Parameters.c" />
+    <ClCompile Include="table.c" />
     <ClCompile Include="parser.c" />
     <ClCompile Include="Token.c" />
     <ClCompile Include="win.lex.yy.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Dimension.h" />
+    <ClInclude Include="Parameters.h" />
+    <ClInclude Include="table.h" />
     <ClInclude Include="parser.h" />
     <ClInclude Include="Token.h" />
   </ItemGroup>

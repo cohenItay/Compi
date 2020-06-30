@@ -121,8 +121,7 @@ void tableInsert(Table* d, const char* key, const AttrModel* value)
             d->firstRow = tr;
             d->lastRow = tr;
         }
-        if (d->firstRow != d->lastRow) {
-            // table has more then one entry. append node.
+        else {
             d->lastRow->next = tr;
             d->lastRow = tr;
         }

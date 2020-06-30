@@ -42,16 +42,16 @@ static void parse_ARG_LIST(AttrModel*);
 static void parse_ARG_LIST_TAG(AttrModel*, Parameters*, int);
 static void parse_RETURN_STMT(AttrModel*);
 static void parse_RETURN_STMT_TAG(AttrModel*);
-static AttrModel* parse_VAR_TAG();
+static void parse_VAR_TAG(AttrModel*);
 static void parse_EXPR_LIST(AttrModel*);
-static void parse_EXPR_LIST_TAG();
+static void parse_EXPR_LIST_TAG(AttrModel*, int);
 static void parse_CONDITION();
 static AttrModel* parse_EXPR();
-static void parse_EXPR_TAG();
-static void parse_TERM();
-static void parse_TERM_TAG();
-static void parse_FACTOR();
-static void parse_FACTOR_TAG();
+static void parse_EXPR_TAG(AttrModel*);
+static AttrModel* parse_TERM();
+static void parse_TERM_TAG(AttrModel*);
+static AttrModel* parse_FACTOR();
+static void parse_FACTOR_TAG(AttrModel*);
 
 static void validateFunctionsImplementations();
 
@@ -115,11 +115,13 @@ static AttrModel* parse_VAR_DEC() {
 		case TOKEN_INTEGER_TYPE:
 		case TOKEN_FLOAT_TYPE: {
 			fprintf(yyout, "Rule VAR_DEC -> TYPE id VAR_DEC_TAG\n");
-			attrModel->type = "";
 			attrModel->type = parse_TYPE();
+			attrModel->value = (nextToken->kind == TOKEN_INTEGER_TYPE) ? "0" : NULL; // not supporting float values
 			match(TOKEN_ID);
+			attrModel->name = nextToken->lexeme; // match has updated nextToken to point on the id
 			attrModel->list = parse_VAR_DEC_TAG();
 			attrModel->role = ATTR_ROLE_VAR;
+			tableInsert(mTbl, attrModel->name, attrModel);
 			break;
 		}
 		default: {
@@ -676,6 +678,7 @@ void parse_COMP_STMT(AttrModel* inheritedAttrs) {
 	}
 }
 
+/* responsible for variable declerations inside a function body */
 static void parse_VAR_DEC_LIST() {
 	eTOKENS* self_follow;
 	nextToken = next_token();
@@ -684,8 +687,7 @@ static void parse_VAR_DEC_LIST() {
 	switch (nextToken->kind) {
 		case TOKEN_INTEGER_TYPE:
 		case TOKEN_FLOAT_TYPE: {
-			fprintf(yyout, "Rule VAR_DEC_LIST -> VAR_DEC VAR_DEC_LIST_TAG\n");
-			parse_VAR_DEC();
+			fprintf(yyout, "Rule VAR_DEC_LIST -> VAR_DEC_LIST_TAG\n");
 			parse_VAR_DEC_LIST_TAG();
 			break;
 		}
@@ -783,14 +785,17 @@ static void parse_STMT_LIST_TAG(AttrModel* inhertiedModel) {
 /* inheritedAttrs reflect the the function prototype which this body belongs to*/
 static void parse_STMT(AttrModel* inheritedAttr) {
 	eTOKENS* self_follow;
+	AttrModel* idAttrs;
 	nextToken = next_token();
 	back_token();
 
 	switch (nextToken->kind) {
 		case TOKEN_ID: {
+			// excpection a declared variable / function usage.
 			fprintf(yyout, "Rule STMT ->  id STMT_TAG\n");
+			idAttrs = tableSearch(mTbl, nextToken->lexeme); // might belong to a variable or a function
 			match(TOKEN_ID);
-			parse_STMT_TAG(inheritedAttr);
+			parse_STMT_TAG(idAttrs);
 			break;
 		}
 		case TOKEN_CURLY_BRACE_OPEN: {
@@ -818,8 +823,8 @@ static void parse_STMT(AttrModel* inheritedAttr) {
 	}
 }
 
-/* inheritedAttrs reflect the the function prototype which this body belongs to*/
-static void parse_STMT_TAG(AttrModel* inheritedAttrs) {
+/* idAttrs reflect the the function / variable which was previously declared and now required to be used*/
+static void parse_STMT_TAG(AttrModel* idAttrs) {
 	eTOKENS* self_follow;
 	AttrModel* funAttrs;
 	nextToken = next_token();
@@ -828,17 +833,18 @@ static void parse_STMT_TAG(AttrModel* inheritedAttrs) {
 
 	switch (nextToken->kind) {
 		case TOKEN_AR_EQUAL:
-		case TOKEN_ID: {
+		case TOKEN_BRACKET_OPEN: {
+			// this is a variable, might be array.
 			fprintf(yyout, "Rule STMT_TAG ->    VAR# = EXPR \n");
-			varAttrs = parse_VAR_TAG();
+			parse_VAR_TAG(idAttrs);
 			match(TOKEN_AR_EQUAL);
 			exprAttrs = parse_EXPR();
-			if (strcmp(varAttrs->type, ATTR_TYPE_INT) && strcmp(exprAttrs->type, ATTR_TYPE_INT)) {
-				fprinf("CONTEXT ERROR: Illegal assignment. line %d\n", nextToken->lineNumber);
+			if (!strcmp(idAttrs->type, ATTR_TYPE_INT) && strcmp(exprAttrs->type, ATTR_TYPE_INT)) {
+				fprintf(yyout, "CONTEXT ERROR: Illegal assignment. line %d\n", nextToken->lineNumber);
 			}
-			if (strcmp(varAttrs->type, ATTR_TYPE_FLOAT) &&
+			if (!strcmp(idAttrs->type, ATTR_TYPE_FLOAT) &&
 				(strcmp(exprAttrs->type, ATTR_TYPE_INT) || strcmp(exprAttrs->type, ATTR_TYPE_FLOAT))) {
-				fprinf("CONTEXT ERROR: Illegal assignment. line %d\n", nextToken->lineNumber);
+				fprintf(yyout, "CONTEXT ERROR: Illegal assignment. line %d\n", nextToken->lineNumber);
 			}
 			break;
 		}
@@ -849,8 +855,8 @@ static void parse_STMT_TAG(AttrModel* inheritedAttrs) {
 			if (funAttrs != NULL &&
 				strcmp(funAttrs->role, ATTR_ROLE_PRE_FUNC) || strcmp(funAttrs->role, ATTR_ROLE_FULL_FUNC)) 
 			{
-				fprinf(yyout, "%s is not a function. line %d\n", nextToken->lineNumber, nextToken->lineNumber);
-				inheritedAttrs->type = ATTR_TYPE_ERR;
+				fprintf(yyout, "%s is not a function. line %d\n", nextToken->lineNumber, nextToken->lineNumber);
+				idAttrs->type = ATTR_TYPE_ERR;
 			}
 			nextToken = next_token(); // restore token location
 			match(TOKEN_PARENTHESE_OPEN);
@@ -890,7 +896,7 @@ static void parse_IF_STMT(AttrModel* inheritedAttrs) {
 	}
 }
 
-static void parse_ARGS(AttrModel* inheritedAttrs) {
+static void parse_ARGS(AttrModel* funcAttrs) {
 	nextToken = next_token();
 	back_token();
 
@@ -900,7 +906,7 @@ static void parse_ARGS(AttrModel* inheritedAttrs) {
 		case TOKEN_FLOAT:
 		case TOKEN_PARENTHESE_OPEN: {
 			fprintf(yyout, "Rule _ARGS ->  ARG_LIST \n");
-			parse_ARG_LIST(inheritedAttrs);
+			parse_ARG_LIST(funcAttrs);
 			break;
 		}
 		// rule supports epsilon so adding cases for Follow(X):
@@ -915,7 +921,7 @@ static void parse_ARGS(AttrModel* inheritedAttrs) {
 	}
 }
 
-static void parse_ARG_LIST(AttrModel* inheritedAttrs) {
+static void parse_ARG_LIST(AttrModel* funcAttrs) {
 	Parameters* params;
 	AttrModel* exprAttrs;
 	nextToken = next_token();
@@ -927,12 +933,12 @@ static void parse_ARG_LIST(AttrModel* inheritedAttrs) {
 		case TOKEN_PARENTHESE_OPEN: {
 			fprintf(yyout, "Rule ARG_LIST ->  EXPR ARG_LIST_TAG\n");
 			exprAttrs = parse_EXPR();
-			params = (Parameters*)inheritedAttrs->list;
+			params = (Parameters*)funcAttrs->list;
 			if (params->amount > 0 &&
 				strcmp(exprAttrs->type, params->params_array[0]->type)) {
 				fprintf("CONTEXT ERROR: type mismatch for first argument for function, line %d\n", nextToken->lineNumber);
 			}
-			parse_ARG_LIST_TAG(inheritedAttrs, params, 1);
+			parse_ARG_LIST_TAG(funcAttrs, params, 1);
 			break;
 		}
 		default: {
@@ -956,7 +962,7 @@ static void parse_ARG_LIST_TAG(AttrModel* inheritedAttrs, Parameters* params, in
 			match(TOKEN_COMMA);
 			exprAttrs = parse_EXPR();
 			if (strcmp(exprAttrs->type, checkedParam->type)) {
-				fprinf(yyout, "CONTEXT EXCEPTION: mismatch parameter type at line %d\n", nextToken->lineNumber);
+				fprintf(yyout, "CONTEXT EXCEPTION: mismatch parameter type at line %d\n", nextToken->lineNumber);
 				inheritedAttrs->type = ATTR_TYPE_ERR;
 			}
 			parse_ARG_LIST_TAG(inheritedAttrs, params, checkedParamIndex+1);
@@ -1010,7 +1016,7 @@ static void parse_RETURN_STMT_TAG(AttrModel* inheritedAttrs) {
 			fprintf(yyout, "Rule RETURN_STMT_TAG ->  EXPR \n");
 			exprAttrs = parse_EXPR();
 			if (strcmp(exprAttrs->type, inheritedAttrs->type)) {
-				fprinf(yyout, "CONTEXT ERROR: Excpected return type of %s but %s found. line %d\n", inheritedAttrs->type, exprAttrs->type, nextToken->lineNumber);
+				fprintf(yyout, "CONTEXT ERROR: Excpected return type of %s but %s found. line %d\n", inheritedAttrs->type, exprAttrs->type, nextToken->lineNumber);
 			}
 			break;
 		}
@@ -1019,7 +1025,7 @@ static void parse_RETURN_STMT_TAG(AttrModel* inheritedAttrs) {
 		case TOKEN_CURLY_BRACE_CLOSE: {
 			fprintf(yyout, "Rule RETURN_STMT_TAG -> epsilon\n");
 			if (strcmp(ATTR_TYPE_VOID, inheritedAttrs->type)) {
-				fprinf(yyout, "CONTEXT ERROR: Excpected return type of void but %s found. line %d\n", exprAttrs->type, nextToken->lineNumber);
+				fprintf(yyout, "CONTEXT ERROR: Excpected return type of void but %s found. line %d\n", inheritedAttrs->type, nextToken->lineNumber);
 			}
 			break;
 		}
@@ -1031,21 +1037,22 @@ static void parse_RETURN_STMT_TAG(AttrModel* inheritedAttrs) {
 	}
 }
 
-static AttrModel* parse_VAR_TAG() {
+/* idAttrs reflect the the variable which was previously declared and now required to be used. might be array*/
+static void parse_VAR_TAG(AttrModel* varAttrs) {
 	eTOKENS* self_follow;
+
 	nextToken = next_token();
 	back_token();
-
 	switch (nextToken->kind) {
 		case TOKEN_BRACKET_OPEN: {
+			// should be an array
 			fprintf(yyout, "Rule VAR_TAG -> [ EXPR_LIST ]\n");
 			match(TOKEN_BRACKET_OPEN);
-			if (attrModel->list == NULL || ((Dimension*)attrModel->list)->amount < 1) {
-				fprinf(yyout, "variable %s should be an array or multi dimensional. line %d\n", attrModel->name, nextToken->lineNumber);
-				attrModel->type = ATTR_TYPE_ERR;
+			if (varAttrs->list == NULL || ((Dimension*)varAttrs->list)->amount < 1) {
+				fprintf(yyout, "variable %s should be an array or multi dimensional. line %d\n", varAttrs->name, nextToken->lineNumber);
+				varAttrs->type = ATTR_TYPE_ERR;
 			}
-			parse_EXPR_LIST(attrModel);
-
+			parse_EXPR_LIST(varAttrs);
 			match(TOKEN_BRACKET_CLOSE);
 			break;
 		}
@@ -1065,9 +1072,9 @@ static AttrModel* parse_VAR_TAG() {
 		case TOKEN_PARENTHESE_CLOSE:
 		case TOKEN_AR_EQUAL: {
 			fprintf(yyout, "Rule VAR_TAG -> epsilon\n");
-			if (attrModel->list != NULL && ((Dimension*)attrModel->list)->amount > 0) {
-				fprinf(yyout, "CONEXT ERROR: variable %s cannot be an array or have a dimension\n", attrModel->name);
-				attrModel->type = ATTR_TYPE_ERR;
+			if (varAttrs->list != NULL && ((Dimension*)varAttrs->list)->amount > 0) {
+				fprintf(yyout, "CONEXT ERROR: variable %s cannot be an array or have a dimension\n", varAttrs->name);
+				varAttrs->type = ATTR_TYPE_ERR;
 			}
 			break;
 		}
@@ -1079,10 +1086,13 @@ static AttrModel* parse_VAR_TAG() {
 		}
 	}
 }
-static void parse_EXPR_LIST(AttrModel* attrModel) {
+
+/* this function parses the indexes when array is used.  var attrs - the attrs of the id being used*/ 
+static void parse_EXPR_LIST(AttrModel* varAttrs) {
 	nextToken = next_token();
 	back_token();
-	AttrModel* resultAttrs = createAttributesModel();
+	AttrModel* exprAttrs;
+	Dimension* varDimen;
 
 	switch (nextToken->kind) {
 		case TOKEN_ID:
@@ -1090,16 +1100,18 @@ static void parse_EXPR_LIST(AttrModel* attrModel) {
 		case TOKEN_FLOAT:
 		case TOKEN_PARENTHESE_OPEN: {
 			fprintf(yyout, "Rule EXPR_LIST ->  EXPR EXPR_LIST_TAG\n");
-			parse_EXPR(resultAttrs);
-			if (strcmp(resultAttrs->type, ATTR_TYPE_INT)) {
-				fprinf(yyout, "CONTEXT EXCEPTION: the expression must return an integer. line %d\n", nextToken->lineNumber);
-				attrModel->type = ATTR_TYPE_ERR;
-			} else if (((Dimension*)attrModel->list)->amount >= ((Dimension*)resultAttrs->list)->amount) {
-				fprinf(yyout, "CONTEXT ERROR: the expression exceeded the array size. line %d\n", nextToken->lineNumber);
-				
-
+			exprAttrs = parse_EXPR();
+			varDimen = (Dimension*)varAttrs->list;
+			if (strcmp(exprAttrs->type, ATTR_TYPE_INT)) {
+				fprintf(yyout, "CONTEXT EXCEPTION: the expression must return an integer. line %d\n", nextToken->lineNumber);
+				varAttrs->type = ATTR_TYPE_ERR;
+			} else if (varDimen->amount >0 &&
+				atoi(exprAttrs->value) >= atoi(varDimen->dimen_array[0])) 
+			{
+				fprintf(yyout, "CONTEXT ERROR: the expression %s exceeded the array size. line %d\n", exprAttrs->name, nextToken->lineNumber);
+				varAttrs->type = ATTR_TYPE_ERR;
 			}
-			parse_EXPR_LIST_TAG();
+			parse_EXPR_LIST_TAG(varAttrs, 1);
 			break;
 		}
 		default: {
@@ -1108,7 +1120,13 @@ static void parse_EXPR_LIST(AttrModel* attrModel) {
 		}
 	}
 }
-static void parse_EXPR_LIST_TAG() {
+static void parse_EXPR_LIST_TAG(AttrModel* varAttrs, int indexToCheck) {
+	AttrModel* exprAttrs;
+	Dimension* varDimens = (Dimension*)varAttrs->list;
+	char* checkedDimen = varDimens->amount > indexToCheck ? varDimens->dimen_array[indexToCheck] : NULL;
+	if (checkedDimen == NULL) {
+		fprintf(yyout, "CONTEXT ERROR: too many dimensions supplied for array %s. line %d\n", varAttrs->name, nextToken->lineNumber);
+	}
 	nextToken = next_token();
 	back_token();
 
@@ -1116,13 +1134,25 @@ static void parse_EXPR_LIST_TAG() {
 		case TOKEN_COMMA: {
 			fprintf(yyout, "Rule EXPR_LIST_TAG ->   , EXPR EXPR_LIST_TAG\n");
 			match(TOKEN_COMMA);
-			parse_EXPR();
-			parse_EXPR_LIST_TAG();
+			exprAttrs = parse_EXPR();
+			if (strcmp(exprAttrs->type, ATTR_TYPE_INT)) {
+				fprintf(yyout, "CONTEXT EXCEPTION: the expression must return an integer. line %d\n", nextToken->lineNumber);
+				varAttrs->type = ATTR_TYPE_ERR;
+			} else if (varDimens->amount > 0 &&
+				atoi(exprAttrs->value) >= atoi(checkedDimen))
+			{
+				fprintf(yyout, "CONTEXT ERROR: the expression %s exceeded the array size. line %d\n", exprAttrs->name, nextToken->lineNumber);
+				varAttrs->type = ATTR_TYPE_ERR;
+			}
+			parse_EXPR_LIST_TAG(varAttrs, indexToCheck+1);
 			break;
 		}
 		// rule supports epsilon so adding cases for Follow(X):
 		case TOKEN_BRACKET_CLOSE: {
 			fprintf(yyout, "Rule EXPR_LIST_TAG -> epsilon\n");
+			if (checkedDimen != NULL) {
+				fprintf(yyout, "CONTEXT ERROR: illegal amount of dimensions. line %d\n", nextToken->lineNumber);
+			}
 			break;
 		}
 		default: {
@@ -1135,6 +1165,7 @@ static void parse_EXPR_LIST_TAG() {
 static void parse_CONDITION() {
 	nextToken = next_token();
 	back_token();
+	AttrModel* exprAttrs;
 
 	switch (nextToken->kind) {
 		case TOKEN_ID: 
@@ -1142,9 +1173,15 @@ static void parse_CONDITION() {
 		case TOKEN_FLOAT:
 		case TOKEN_PARENTHESE_OPEN: {
 			fprintf(yyout, "Rule CONDITION -> EXPR rel_op EXPR\n");
-			parse_EXPR();
+			exprAttrs =  parse_EXPR();
+			if (exprAttrs->type == ATTR_TYPE_ERR) {
+				fprintf(yyout, "CONTEXT ERROR: type not supported for expression %s. line %d\n", exprAttrs->name, nextToken->lineNumber);
+			}
 			match_multi(6,TOKEN_COMP_E,TOKEN_COMP_NE,TOKEN_COMP_GT,TOKEN_COMP_GTE,TOKEN_COMP_LT,TOKEN_COMP_LTE);
-			parse_EXPR();
+			exprAttrs = parse_EXPR();
+			if (exprAttrs->type == ATTR_TYPE_ERR) {
+				fprintf(yyout, "CONTEXT ERROR: type not supported for expression %s. line %d\n", exprAttrs->name, nextToken->lineNumber);
+			}
 			break;
 		}
 		default: {
@@ -1154,19 +1191,22 @@ static void parse_CONDITION() {
 	}
 }
 
+/* reflects an addition of terms one to another. 
+( basically reflects integer / float / array / function or abbrevation of those types)*/
 static AttrModel* parse_EXPR() {
 	eTOKENS* self_follow;
-	nextToken = next_token();
-	back_token();
+	AttrModel* attrs = NULL;
 
+	nextToken = next_token();
+	back_token();	
 	switch (nextToken->kind) {
 		case TOKEN_ID:
 		case TOKEN_INTEGER:
 		case TOKEN_FLOAT:
 		case TOKEN_PARENTHESE_OPEN: {
 			fprintf(yyout, "Rule EXPR ->  TERM EXPR_TAG\n");
-			parse_TERM();
-			parse_EXPR_TAG();
+			attrs = parse_TERM();
+			parse_EXPR_TAG(attrs);
 			break;
 		}
 		default: {
@@ -1176,9 +1216,15 @@ static AttrModel* parse_EXPR() {
 			error_recovery_multi(11, self_follow);
 		}
 	}
+	return attrs;
 }
-static void parse_EXPR_TAG() {
+
+static void parse_EXPR_TAG(AttrModel* exprAttrs) {
 	eTOKENS* self_follow;
+	AttrModel* termAttrs;
+	int result;
+	int length;
+	char* buff; // string in heap
 	nextToken = next_token();
 	back_token();
 
@@ -1186,8 +1232,22 @@ static void parse_EXPR_TAG() {
 		case TOKEN_AR_ADD: {
 			fprintf(yyout, "Rule EXPR_TAG ->  + TERM EXPR_TAG\n");
 			match(TOKEN_AR_ADD);
-			parse_TERM();
-			parse_EXPR_TAG();
+			termAttrs = parse_TERM();
+			if ( !strcmp(termAttrs->type, ATTR_TYPE_ERR) || !strcmp(exprAttrs->type, ATTR_TYPE_ERR)) {
+				exprAttrs->type = ATTR_TYPE_ERR;
+			} else if (!strcmp(termAttrs->type, ATTR_TYPE_INT) && !strcmp(exprAttrs->type, ATTR_TYPE_INT)) {
+				result = atoi(exprAttrs->value) + atoi(termAttrs->value);
+				length = snprintf(NULL, 0, "%d", result); // digits length
+				buff = malloc(sizeof(char)*(length + 1)); // allocate enough in heap
+				snprintf(buff, length + 1, "%d", result); // converte result to string
+				exprAttrs->value = buff;
+			} else {
+				// th new term type is float. change the outcome type:
+				exprAttrs->type = ATTR_TYPE_FLOAT;
+				exprAttrs->value = NULL; // TODO: SHOULD BE THE ADDITION BETWEEN FLOAT AND INT
+			}
+			free(termAttrs);
+			parse_EXPR_TAG(exprAttrs);
 			break;
 		}
 		// rule supports epsilon so adding cases for Follow(EXPR_TAG):
@@ -1213,8 +1273,12 @@ static void parse_EXPR_TAG() {
 		}
 	}
 }
-static void parse_TERM() {
+
+/* reflects an multiplextion of factors one to another.
+( basically reflects integer / float / array / function or abbrevation of those types)*/
+static AttrModel* parse_TERM() {
 	eTOKENS* self_follow;
+	AttrModel* fctrAttrs = NULL;
 	nextToken = next_token();
 	back_token();
 
@@ -1224,8 +1288,8 @@ static void parse_TERM() {
 		case TOKEN_FLOAT:
 		case TOKEN_PARENTHESE_OPEN: {
 			fprintf(yyout, "Rule TERM ->  FACTOR TERM_TAG\n");
-			parse_FACTOR();
-			parse_TERM_TAG();
+			fctrAttrs = parse_FACTOR();
+			parse_TERM_TAG(fctrAttrs);
 			break;
 		}
 		default: {
@@ -1235,9 +1299,15 @@ static void parse_TERM() {
 			error_recovery_multi(12, self_follow);
 		}
 	}
+	return fctrAttrs;
 }
-static void parse_TERM_TAG() {
+
+static void parse_TERM_TAG(AttrModel* fctrAttrs) {
 	eTOKENS* self_follow;
+	AttrModel* newFctrAttrs;
+	int result;
+	int length;
+	char* buff; // string in heap
 	nextToken = next_token();
 	back_token();
 
@@ -1245,8 +1315,23 @@ static void parse_TERM_TAG() {
 		case TOKEN_AR_MUL: {
 			fprintf(yyout, "Rule TERM_TAG ->  * FACTOR TERM_TAG\n");
 			match(TOKEN_AR_MUL);
-			parse_FACTOR();
-			parse_TERM_TAG();
+			newFctrAttrs = parse_FACTOR();
+			if (!strcmp(fctrAttrs->type, ATTR_TYPE_ERR) || !strcmp(newFctrAttrs->type, ATTR_TYPE_ERR)) {
+				fctrAttrs->type = ATTR_TYPE_ERR;
+				fctrAttrs->value = NULL;
+			} else if (!strcmp(fctrAttrs->type, ATTR_TYPE_INT) || !strcmp(newFctrAttrs->type, ATTR_TYPE_INT)) {
+				fctrAttrs->type = ATTR_TYPE_INT;
+				result = atoi(fctrAttrs->value) * atoi(newFctrAttrs->value);
+				length = snprintf(NULL, 0, "%d", result); // digits length
+				buff = malloc(sizeof(char) * (length + 1)); // allocate enough in heap
+				snprintf(buff, length + 1, "%d", result); // converte result to string
+				fctrAttrs->value = result;
+			} else {
+				fctrAttrs->type = ATTR_TYPE_FLOAT;
+				fctrAttrs->value = NULL; // TODO: should calculated with int and float addition..
+			}
+			free(newFctrAttrs);
+			parse_TERM_TAG(fctrAttrs);
 			break;
 		}
 		// rule supports epsilon so adding cases for Follow(TERM_TAG):
@@ -1273,32 +1358,42 @@ static void parse_TERM_TAG() {
 		}
 	}
 }
-static void parse_FACTOR() {
+static AttrModel* parse_FACTOR() {
 	eTOKENS* self_follow;
+	AttrModel* attrs = createAttributesModel();
+	AttrModel* exprAttrs;
 	nextToken = next_token();
 	back_token();
 
 	switch (nextToken->kind) {
 		case TOKEN_ID: {
 			fprintf(yyout, "Rule FACTOR ->  id FACTOR_TAG\n");
+			attrs->name = nextToken->lexeme;
 			match(TOKEN_ID);
-			parse_FACTOR_TAG();
+			parse_FACTOR_TAG(attrs->name);
 			break;
 		}
 		case TOKEN_INTEGER: {
 			fprintf(yyout, "Rule FACTOR ->  int_num \n");
 			match(TOKEN_INTEGER);
+			attrs->type = ATTR_TYPE_INT;
+			attrs->value = nextToken->lexeme;
 			break;
 		}
 		case TOKEN_FLOAT: {
 			fprintf(yyout, "Rule FACTOR ->  float_num  \n");
+			attrs->type = ATTR_TYPE_FLOAT;
+			attrs->value = nextToken->lexeme;
 			match(TOKEN_FLOAT);
 			break;
 		}
 		case TOKEN_PARENTHESE_OPEN: {
 			fprintf(yyout, "Rule FACTOR ->  (EXPR)\n");
 			match(TOKEN_PARENTHESE_OPEN);
-			parse_EXPR();
+			exprAttrs = parse_EXPR();
+			attrs->type = exprAttrs->type;
+			attrs->value = exprAttrs->value;
+			free(exprAttrs);
 			match(TOKEN_PARENTHESE_CLOSE);
 			break;
 		}
@@ -1309,22 +1404,41 @@ static void parse_FACTOR() {
 			error_recovery_multi(13, self_follow);
 		}
 	}
+	return attrs;
 }
-static void parse_FACTOR_TAG() {
+
+/* 
+idAttrs reflect the the function / variable which was previously
+declared and now required to be used
+*/
+static void parse_FACTOR_TAG(char* idName) {
 	eTOKENS* self_follow;
+	AttrModel* idAttrs = tableSearch(mTbl, idName);
 	nextToken = next_token();
 	back_token();
 
 	switch (nextToken->kind) {
 		case TOKEN_BRACKET_OPEN: {
 			fprintf(yyout, "Rule FACTOR_TAG ->  VAR_TAG\n");
-			parse_VAR_TAG();
+			parse_VAR_TAG(idAttrs);
+			if (idAttrs != NULL) {
+				if (strcmp(idAttrs->role, ATTR_ROLE_VAR)) {
+					fprintf(yyout, "CONTEXT ERROR: %s is not a variable. line %d\n", idAttrs->name, nextToken->lineNumber);
+				}
+				idAttrs->value = strcmp(idAttrs->type, ATTR_TYPE_INT) ? NULL : "0";
+			}
 			break;
 		}
 		case TOKEN_PARENTHESE_OPEN: {
 			fprintf(yyout, "Rule FACTOR_TAG ->  ( ARGS )\n");
 			match(TOKEN_PARENTHESE_OPEN);
-			parse_ARGS();
+			parse_ARGS(idAttrs);
+			if (idAttrs != NULL) {
+				if (strcmp(idAttrs->role, ATTR_ROLE_PRE_FUNC) || strcmp(idAttrs->role, ATTR_ROLE_FULL_FUNC)) {
+					fprintf(yyout, "CONTEXT ERROR: %s is not a function. line %d\n", idAttrs->name, nextToken->lineNumber);
+				}
+				idAttrs->value = strcmp(idAttrs->type, ATTR_TYPE_INT) ? NULL : "0";
+			}
 			match(TOKEN_PARENTHESE_CLOSE);
 			break;
 		}
